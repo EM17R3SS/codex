@@ -1,0 +1,10 @@
+/home/empr3ss/Desktop/Development/codex/build/CMakeFiles/task1.dir
+/home/empr3ss/Desktop/Development/codex/build/CMakeFiles/task2.dir
+/home/empr3ss/Desktop/Development/codex/build/CMakeFiles/task3.dir
+/home/empr3ss/Desktop/Development/codex/build/CMakeFiles/task4.dir
+/home/empr3ss/Desktop/Development/codex/build/CMakeFiles/task5.dir
+/home/empr3ss/Desktop/Development/codex/build/CMakeFiles/task6.dir
+/home/empr3ss/Desktop/Development/codex/build/CMakeFiles/run-all.dir
+/home/empr3ss/Desktop/Development/codex/build/CMakeFiles/init.dir
+/home/empr3ss/Desktop/Development/codex/build/CMakeFiles/edit_cache.dir
+/home/empr3ss/Desktop/Development/codex/build/CMakeFiles/rebuild_cache.dir
