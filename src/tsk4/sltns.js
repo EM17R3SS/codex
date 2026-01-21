@@ -20,23 +20,28 @@ targetSum = 10
 
 function myFunc(numArray, targetSum) {
   if (!Array.isArray(numArray)) {
+    //проверка на массив
     throw new TypeError("First arg be arr");
   }
   if (typeof targetSum != "number" || !Number.isFinite(targetSum)) {
+    //проверка что таргет это число и конечно
     throw new TypeError("sec arg need to be a number and finite");
   }
   if (!Number.isInteger(targetSum)) {
+    //проверка что таргет инт
     throw new TypeError("sec arg is int");
   }
-  const MAX_ARRAY_LENGTH = 1000000;
+  const MAX_ARRAY_LENGTH = 1000000; //установили лимит
   if (numArray.length > MAX_ARRAY_LENGTH) {
+    //проверка что длина массива меньше лимита
     throw new RangeError("len arr more t maxlen");
   }
 
-  const validNumber = [];
-  const uniqNumbers = new Set();
+  const validNumber = []; //массив валидных чисел
+  const uniqNumbers = new Set(); //сет для уникальности элементов
 
   for (let i = 0; i < numArray.length; i++) {
+    //проверка каждого элемента
     const elementOfArr = numArray[i];
 
     if (typeof elementOfArr != "number" || !Number.isFinite(elementOfArr)) {
@@ -49,38 +54,43 @@ function myFunc(numArray, targetSum) {
       throw new Error("el alr in arr");
     }
 
-    uniqNumbers.add(elementOfArr);
+    uniqNumbers.add(elementOfArr); //добавляем в сет и массив валидных
     validNumber.push(elementOfArr);
   }
 
   if (validNumber.length < 2) {
+    //пары не будет если меньше 2 элементов
     return [];
   }
 
-  const numSet = new Set();
-  const foundPair = [];
+  const numSet = new Set(); //сет для просмотренных
+  const foundPair = []; //найденные пары
 
   for (const currNum of validNumber) {
-    const cmpl = targetSum - currNum;
+    //основной алгоритм поиска
+    const cmpl = targetSum - currNum; //вычисление дополнения
 
     if (!Number.isSafeInteger(cmpl)) {
+      //те же проверки, я их уже не комментирую, но тут от переполнения
       continue;
     }
     if (numSet.has(cmpl) && cmpl != currNum) {
+      //нашли доп и это не тоже самое число то пушим в массив фп и стопим фор
       foundPair.push([cmpl, currNum]);
       break;
     }
 
-    numSet.add(currNum);
+    numSet.add(currNum); //добавка в сет
     if (numSet.size > MAX_ARRAY_LENGTH) {
+      //проверка на переполнение
       throw new Error("is more  uniq num");
     }
   }
-  return foundPair.length > 0 ? foundPair[0] : [];
+  return foundPair.length > 0 ? foundPair[0] : []; //собственно возврат результата
 }
 
 function runTest() {
-  let pass = 0;
+  let pass = 0; //сколько прошло или провалилось
   let fail = 0;
 
   const testCase = [
