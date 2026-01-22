@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Пример HTML страницы с множеством тегов">
+    <meta name="keywords" content="HTML, теги, пример, веб-разработка">
+    <title>Демонстрация HTML тегов</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.7;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(to right, #2c3e50, #4a6491);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 300;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        nav {
+            background-color: #34495e;
+            padding: 15px;
+        }
+
+        nav ul {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            flex-wrap: wrap;
+        }
+
+        nav li {
+            margin: 0 15px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        nav a:hover {
+            background-color: #4a6491;
+        }
+
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 30px;
+        }
+
+        .content-section {
+            flex: 3;
+            min-width: 300px;
+            padding-right: 30px;
+        }
+
+        .sidebar {
+            flex: 1;
+            min-width: 250px;
+            background-color: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding-bottom: 25px;
+            border-bottom: 2px dashed #e0e0e0;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #4a6491;
+        }
+
+        h3 {
+            color: #4a6491;
+            margin: 20px 0 15px;
+            font-size: 1.4rem;
+        }
+
+        /* Различные стили для параграфов */
+        p {
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+            text-align: justify;
+        }
+
+        p.important {
+            background-color: #fff9e6;
+            padding: 15px;
+            border-left: 5px solid #ffc107;
+            border-radius: 0 5px 5px 0;
+            font-weight: 600;
+        }
+
+        p.note {
+            background-color: #e8f4fd;
+            padding: 15px;
+            border-left: 5px solid #2196f3;
+            border-radius: 0 5px 5px 0;
+        }
+
+        p.warning {
+            background-color: #ffebee;
+            padding: 15px;
+            border-left: 5px solid #f44336;
+            border-radius: 0 5px 5px 0;
+        }
+
+        p.code {
+            font-family: 'Courier New', monospace;
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        p.quote {
+            font-style: italic;
+            color: #555;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        p.quote::before {
+            content: "„";
+            font-size: 4rem;
+            color: #4a6491;
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            opacity: 0.3;
+        }
+
+        .paragraph-group {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+            border: 1px solid #e0e0e0;
+        }
+
+        .paragraph-group p {
+            margin-bottom: 15px;
+        }
+
+        .paragraph-group p:last-child {
+            margin-bottom: 0;
+        }
+
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 25px;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        .code-block {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            margin: 25px 0;
+            font-family: 'Courier New', monospace;
+            border-radius: 8px;
+            overflow-x: auto;
+            line-height: 1.5;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #4a6491;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f5f9ff;
+        }
+
+        form {
+            background-color: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: #4a6491;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2c3e50;
+        }
+
+        .file-info {
+            background-color: #e8f4fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .file-icon {
+            font-size: 3rem;
+            margin-right: 20px;
+            color: #4a6491;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: #4a6491;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: all 0.3s;
+            border: 2px solid #4a6491;
+        }
+
+        .btn:hover {
+            background-color: white;
+            color: #4a6491;
+        }
+
+        .tags-demo {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+
+        .inline-tags {
+            margin: 15px 0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            font-size: 0.95rem;
+            border-top: 5px solid #4a6491;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+                padding: 20px;
+            }
+
+            .content-section {
+                padding-right: 0;
+                margin-bottom: 30px;
+            }
+
+            h1 {
+                font-size: 2.2rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            nav li {
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Демонстрация HTML тегов</h1>
+            <p class="subtitle">Эта страница содержит множество HTML-тегов, включая различные варианты использования тега &lt;p&gt; и его производных. Все теги представлены с примерами использования.</p>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="#paragraphs">Параграфы</a></li>
+                <li><a href="#text-formatting">Форматирование</a></li>
+                <li><a href="#lists">Списки</a></li>
+                <li><a href="#tables">Таблицы</a></li>
+                <li><a href="#forms">Формы</a></li>
+                <li><a href="#media">Медиа</a></li>
+            </ul>
+        </nav>
+
+        <div class="main-content">
+            <main class="content-section">
+                <section id="paragraphs" class="section">
+                    <h2>Тег &lt;p&gt; и его производные</h2>
+
+                    <h3>Обычные параграфы</h3>
+                    <p>Это простой параграф с текстом. Тег &lt;p&gt; является одним из самых часто используемых тегов в HTML. Он определяет абзац текста и автоматически добавляет отступы сверху и снизу.</p>
+                    <p>Второй параграф демонстрирует разделение текста на логические блоки. Каждый абзац начинается с новой строки и имеет отступы от соседних элементов.</p>
+
+                    <h3>Параграф с классом "important"</h3>
+                    <p class="important">Это важный параграф, выделенный с помощью CSS. Он имеет желтый фон и жирное начертание для привлечения внимания к важной информации.</p>
+
+                    <h3>Параграф с классом "note"</h3>
+                    <p class="note">Это примечание с голубым фоном. Такой стиль часто используется для дополнительных пояснений, советов или заметок, которые не являются критически важными, но полезны для понимания.</p>
+
+                    <h3>Параграф с классом "warning"</h3>
+                    <p class="warning">Это предупреждение с красным акцентом. Используется для выделения потенциально опасных действий, предостережений или критически важной информации, которую нельзя игнорировать.</p>
+
+                    <h3>Параграф с классом "code"</h3>
+                    <p class="code">&lt;p class="example"&gt;Это пример параграфа с кодом HTML&lt;/p&gt;</p>
+
+                    <h3>Параграф с классом "quote"</h3>
+                    <p class="quote">Это цитата, оформленная с помощью CSS псевдоэлементов. Такое оформление помогает визуально отделить цитаты от основного текста и придать им элегантный вид.</p>
+
+                    <h3>Группа параграфов</h3>
+                    <div class="paragraph-group">
+                        <p>Первый параграф в группе. Группировка параграфов с помощью контейнера div позволяет применять общие стили к нескольким абзацам одновременно.</p>
+                        <p>Второй параграф в группе. Это полезно, когда нужно выделить логический блок текста, состоящий из нескольких абзацев, например, цитату или пример кода с пояснениями.</p>
+                        <p>Третий параграф в группе. Обратите внимание, что все параграфы внутри контейнера имеют одинаковое оформление и отступы.</p>
+                    </div>
+
+                    <h3>Параграфы с вложенными элементами</h3>
+                    <p>Это параграф с <strong>жирным текстом</strong>, <em>курсивом</em>, <u>подчеркиванием</u>, <mark>выделением</mark> и <small>уменьшенным текстом</small>. Также здесь есть <a href="#top">ссылка</a> и <code>фрагмент кода</code>.</p>
+
+                    <p>Еще один пример с формулами: H<sub>2</sub>O - формула воды, а E=mc<sup>2</sup> - знаменитая формула Эйнштейна. Также можно использовать <abbr title="HyperText Markup Language">HTML</abbr> аббревиатуры.</p>
+                </section>
+
+                <section id="text-formatting" class="section">
+                    <h2>Форматирование текста</h2>
+
+                    <p>HTML предоставляет множество тегов для форматирования текста:</p>
+
+                    <div class="tags-demo">
+                        <div class="inline-tags"><strong>&lt;strong&gt;:</strong> <strong>Важный текст (жирный)</strong></div>
+                        <div class="inline-tags"><em>&lt;em&gt;:</em> <em>Акцентированный текст (курсив)</em></div>
+                        <div class="inline-tags"><u>&lt;u&gt;:</u> <u>Подчеркнутый текст</u></div>
+                        <div class="inline-tags"><mark>&lt;mark&gt;:</mark> <mark>Выделенный текст</mark></div>
+                        <div class="inline-tags"><small>&lt;small&gt;:</small> <small>Уменьшенный текст</small></div>
+                        <div class="inline-tags"><del>&lt;del&gt;:</del> <del>Удаленный текст</del></div>
+                        <div class="inline-tags"><ins>&lt;ins&gt;:</ins> <ins>Вставленный текст</ins></div>
+                        <div class="inline-tags"><sub>&lt;sub&gt;:</sub> H<sub>2</sub>O</div>
+                        <div class="inline-tags"><sup>&lt;sup&gt;:</sup> 10<sup>2</sup> = 100</div>
+                        <div class="inline-tags"><code>&lt;code&gt;:</code> <code>print("Hello World")</code></div>
+                        <div class="inline-tags"><kbd>&lt;kbd&gt;:</kbd> <kbd>Ctrl+C</kbd></div>
+                        <div class="inline-tags"><samp>&lt;samp&gt;:</samp> <samp>Результат: 42</samp></div>
+                        <div class="inline-tags"><var>&lt;var&gt;:</var> <var>x</var> + <var>y</var> = <var>z</var></div>
+                        <div class="inline-tags"><abbr>&lt;abbr&gt;:</abbr> <abbr title="World Wide Web">WWW</abbr></div>
+                        <div class="inline-tags"><cite>&lt;cite&gt;:</cite> <cite>Война и мир</cite></div>
+                        <div class="inline-tags"><blockquote>&lt;blockquote&gt;:</blockquote> <blockquote>Быть или не быть - вот в чем вопрос.</blockquote></div>
+                        <div class="inline-tags"><q>&lt;q&gt;:</q> <q>Знание - сила</q></div>
+                        <div class="inline-tags"><address>&lt;address&gt;:</address> <address>ул. Примерная, д. 1</address></div>
+                    </div>
+
+                    <p class="note">Все эти теги могут использоваться внутри параграфов для semantic разметки текста.</p>
+                </section>
+
+                <section id="lists" class="section">
+                    <h2>Списки в HTML</h2>
+
+                    <h3>Нумерованный список (ol)</h3>
+                    <ol>
+                        <li>Первый элемент списка</li>
+                        <li>Второй элемент списка</li>
+                        <li>Третий элемент списка с вложенным списком:
+                            <ul>
+                                <li>Вложенный элемент 1</li>
+                                <li>Вложенный элемент 2</li>
+                            </ul>
+                        </li>
+                        <li>Четвертый элемент списка</li>
+                    </ol>
+
+                    <h3>Маркированный список (ul)</h3>
+                    <ul>
+                        <li>Элемент маркированного списка</li>
+                        <li>Еще один элемент</li>
+                        <li>Элемент с <a href="#top">ссылкой</a></li>
+                        <li>Последний элемент</li>
+                    </ul>
+
+                    <h3>Список определений (dl)</h3>
+                    <dl>
+                        <dt>HTML</dt>
+                        <dd>Язык разметки гипертекста</dd>
+
+                        <dt>CSS</dt>
+                        <dd>Каскадные таблицы стилей</dd>
+
+                        <dt>JavaScript</dt>
+                        <dd>Язык программирования для веб-страниц</dd>
+                    </dl>
+                </section>
+
+                <section id="tables" class="section">
+                    <h2>HTML таблицы</h2>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Тег</th>
+                                <th>Описание</th>
+                                <th>Пример</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>&lt;table&gt;</td>
+                                <td>Определяет таблицу</td>
+                                <td>Вся эта таблица</td>
+                            </tr>
+                            <tr>
+                                <td>&lt;tr&gt;</td>
+                                <td>Определяет строку таблицы</td>
+                                <td>Каждая строка здесь</td>
+                            </tr>
+                            <tr>
+                                <td>&lt;th&gt;</td>
+                                <td>Определяет заголовок таблицы</td>
+                                <td>Верхние ячейки</td>
+                            </tr>
+                            <tr>
+                                <td>&lt;td&gt;</td>
+                                <td>Определяет ячейку таблицы</td>
+                                <td>Эти ячейки</td>
+                            </tr>
+                            <tr>
+                                <td>&lt;thead&gt;</td>
+                                <td>Группирует заголовки таблицы</td>
+                                <td>Верхняя часть таблицы</td>
+                            </tr>
+                            <tr>
+                                <td>&lt;tbody&gt;</td>
+                                <td>Группирует тело таблицы</td>
+                                <td>Эта часть таблицы</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section id="forms" class="section">
+                    <h2>HTML формы</h2>
+
+                    <form action="#" method="post">
+                        <div class="form-group">
+                            <label for="name">Имя:</label>
+                            <input type="text" id="name" name="name" placeholder="Введите ваше имя">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email:</label>
+                            <input type="email" id="email" name="email" placeholder="example@mail.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">Пароль:</label>
+                            <input type="password" id="password" name="password" placeholder="Введите пароль">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="country">Страна:</label>
+                            <select id="country" name="country">
+                                <option value="">Выберите страну</option>
+                                <option value="ru">Россия</option>
+                                <option value="us">США</option>
+                                <option value="de">Германия</option>
+                                <option value="fr">Франция</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Пол:</label>
+                            <div>
+                                <input type="radio" id="male" name="gender" value="male">
+                                <label for="male" style="display: inline; margin-right: 15px;">Мужской</label>
+
+                                <input type="radio" id="female" name="gender" value="female">
+                                <label for="female" style="display: inline;">Женский</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Интересы:</label>
+                            <div>
+                                <input type="checkbox" id="html" name="interests" value="html">
+                                <label for="html" style="display: inline; margin-right: 15px;">HTML</label>
+
+                                <input type="checkbox" id="css" name="interests" value="css">
+                                <label for="css" style="display: inline; margin-right: 15px;">CSS</label>
+
+                                <input type="checkbox" id="js" name="interests" value="js">
+                                <label for="js" style="display: inline;">JavaScript</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="message">Сообщение:</label>
+                            <textarea id="message" name="message" rows="5" placeholder="Введите ваше сообщение..."></textarea>
+                        </div>
+
+                        <button type="submit">Отправить</button>
+                        <button type="reset">Сбросить</button>
+                    </form>
+                </section>
+
+                <section id="media" class="section">
+                    <h2>Медиа элементы</h2>
+
+                    <h3>Изображения</h3>
+                    <p>Тег &lt;img&gt; используется для вставки изображений:</p>
+                    <div style="text-align: center; margin: 20px 0;">
+                        <img src="https://via.placeholder.com/400x200/4a6491/ffffff?text=Пример+изображения" alt="Пример изображения" style="max-width: 100%; border-radius: 8px;">
+                        <p><small>Это изображение-заглушка с помощью сервиса placeholder.com</small></p>
+                    </div>
+
+                    <h3>Аудио</h3>
+                    <p>Тег &lt;audio&gt; используется для вставки аудиофайлов:</p>
+                    <audio controls style="width: 100%; margin: 15px 0;">
+                        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+                        Ваш браузер не поддерживает аудио элемент.
+                    </audio>
+
+                    <h3>Видео</h3>
+                    <p>Тег &lt;video&gt; используется для вставки видеофайлов:</p>
+                    <video controls style="width: 100%; max-width: 600px; display: block; margin: 15px auto; border-radius: 8px;">
+                        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+                        Ваш браузер не поддерживает видео элемент.
+                    </video>
+                </section>
+            </main>
+
+            <aside class="sidebar">
+                <h3>О HTML тегах</h3>
+                <p>HTML (HyperText Markup Language) - это язык разметки, используемый для создания веб-страниц.</p>
+
+                <h3>Структура HTML документа</h3>
+                <div class="code-block">
+&lt;!DOCTYPE html&gt;
+&lt;html lang="ru"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;title&gt;Заголовок страницы&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Заголовок&lt;/h1&gt;
+    &lt;p&gt;Абзац текста&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+                </div>
+
+                <h3>Популярные теги</h3>
+                <ul>
+                    <li>&lt;div&gt; - блочный контейнер</li>
+                    <li>&lt;span&gt; - строчный контейнер</li>
+                    <li>&lt;a&gt; - гиперссылка</li>
+                    <li>&lt;img&gt; - изображение</li>
+                    <li>&lt;ul&gt;, &lt;ol&gt;, &lt;li&gt; - списки</li>
+                    <li>&lt;table&gt; - таблица</li>
+                    <li>&lt;form&gt; - форма</li>
+                </ul>
+
+                <div class="file-info">
+                    <div class="file-icon">📄</div>
+                    <div>
+                        <p><strong>Файл:</strong> index.html</p>
+                        <p><strong>Расширение:</strong> .html</p>
+                        <p>Это стандартное расширение для HTML файлов.</p>
+                    </div>
+                </div>
+
+                <a href="#top" class="btn">В начало страницы</a>
+            </aside>
+        </div>
+
+        <footer>
+            <p>&copy; 2023 Демонстрация HTML тегов. Все права защищены.</p>
+            <p>Страница содержит множество HTML тегов для учебных целей.</p>
+            <p>Теги: &lt;html&gt;, &lt;head&gt;, &lt;body&gt;, &lt;header&gt;, &lt;nav&gt;, &lt;main&gt;, &lt;section&gt;, &lt;article&gt;, &lt;aside&gt;, &lt;footer&gt;, &lt;h1&gt;-&lt;h6&gt;, &lt;p&gt;, &lt;div&gt;, &lt;span&gt;, &lt;a&gt;, &lt;img&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;table&gt;, &lt;tr&gt;, &lt;th&gt;, &lt;td&gt;, &lt;form&gt;, &lt;input&gt;, &lt;button&gt;, &lt;textarea&gt;, &lt;select&gt;, &lt;option&gt;, &lt;label&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;u&gt;, &lt;mark&gt;, &lt;small&gt;, &lt;sub&gt;, &lt;sup&gt;, &lt;code&gt;, &lt;pre&gt;, &lt;blockquote&gt;, &lt;q&gt;, &lt;cite&gt;, &lt;abbr&gt;, &lt;address&gt;, &lt;dl&gt;, &lt;dt&gt;, &lt;dd&gt;, &lt;audio&gt;, &lt;video&gt;, &lt;source&gt;, &lt;iframe&gt;, &lt;canvas&gt;, &lt;svg&gt;, &lt;meta&gt;, &lt;link&gt;, &lt;style&gt;, &lt;script&gt;, &lt;noscript&gt; и многие другие.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Простой JavaScript для демонстрации
+        document.addEventListener('DOMContentLoaded', function() {
+            // Добавляем текущую дату в футер
+            const date = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            const dateString = date.toLocaleDateString('ru-RU', options);
+
+            const dateElement = document.createElement('p');
+            dateElement.textContent = `Дата генерации: ${dateString}`;
+            dateElement.style.marginTop = '10px';
+            dateElement.style.fontSize = '0.85rem';
+            dateElement.style.opacity = '0.8';
+
+            document.querySelector('footer').appendChild(dateElement);
+
+            // Подсветка активной ссылки в навигации
+            const navLinks = document.querySelectorAll('nav a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    navLinks.forEach(l => l.style.backgroundColor = '');
+                    this.style.backgroundColor = '#4a6491';
+                });
+            });
+
+            // Анимация для кнопок
+            const buttons = document.querySelectorAll('button, .btn');
+            buttons.forEach(button => {
+                button.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.1)';
+                });
+
+                button.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = 'none';
+                });
+            });
+
+            // Простая валидация формы
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const name = document.getElementById('name').value;
+                    const email = document.getElementById('email').value;
+
+                    if (!name || !email) {
+                        e.preventDefault();
+                        alert('Пожалуйста, заполните обязательные поля: Имя и Email');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
