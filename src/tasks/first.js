@@ -6,13 +6,27 @@ function special(value) {
         typeof value === "symbol"
     );
 }
+function escape(str) {
+    const escp = {
+        '"': '\\"',
+        "\\": "\\\\",
+        "/": "\\/",
+        "//": "\\//",
+        "\b": "\\b",
+        "\f": "\\f",
+        "\n": "\\n",
+        "\r": "\\r",
+        "\t": "\\t",
+    };
+    return str.replace(/["\\/\b\f\n\r\t]|[/][/]/g, (char) => escapes[char]);
+}
 //use === bcs we dont need type to type
 function stringify(value) {
     if (typeof value === "number") {
         return isFinite(value) ? String(value) : "null";
     }
     if (typeof value === "string") {
-        return `"${value}"`;
+        return escape(value);
     }
     if (typeof value === "boolean") {
         return String(value);
@@ -21,7 +35,7 @@ function stringify(value) {
         return "null";
     }
     if (value === undefined) {
-        return String(undefined);
+        return undefined;
     }
     if (Array.isArray(value)) {
         const valueElements = [];
@@ -36,22 +50,15 @@ function stringify(value) {
         return `[${valueElements.join(",")}]`;
     }
     if (typeof value === "object") {
-        const pairs = [];
-        for (let key in value) {
-            if (Object.prototype.hasOwnProperty.call(value, key)) {
-                const val = value[key];
-                if (special(val)) {
-                    continue;
-                }
-                pairs.push(`"${key}":${stringify(val)}`);
-            }
-        }
+        const pairs = Object.keys(value)
+            .filter((key) => !special(value[key]))
+            .map((key) => `"${key}":${stringify(value[key])}`);
         return `{${pairs.join(",")}}`;
     }
 }
 
 console.log(stringify(42)); // 42 SOLVED
-console.log(stringify("string")); // "string" SOLVED
+console.log(stringify("stri'ng")); // "string" SOLVED
 console.log(stringify(null)); // null SOLVED
 console.log(stringify(true)); // true SOLVED
 console.log(stringify(Infinity)); // null SOLVED
