@@ -17,8 +17,9 @@ function escape(str) {
         "\n": "\\n",
         "\r": "\\r",
         "\t": "\\t",
+        " ": " ",
     };
-    return str.replace(/["\\/\b\f\n\r\t]|[/][/]/g, (char) => escapes[char]);
+    return str.replace(/["\\/\b\f\n\r\t]|[/][/]/g, (char) => escp[char]);
 }
 //use === bcs we dont need type to type
 function stringify(value) {
@@ -58,7 +59,7 @@ function stringify(value) {
 }
 
 console.log(stringify(42)); // 42 SOLVED
-console.log(stringify("stri'ng")); // "string" SOLVED
+console.log(stringify('ooo "razdva"')); // "string" SOLVED
 console.log(stringify(null)); // null SOLVED
 console.log(stringify(true)); // true SOLVED
 console.log(stringify(Infinity)); // null SOLVED
