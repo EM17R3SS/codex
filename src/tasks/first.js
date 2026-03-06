@@ -10,16 +10,13 @@ function escape(str) {
     const escp = {
         '"': '\\"',
         "\\": "\\\\",
-        "/": "\\/",
-        "//": "\\//",
         "\b": "\\b",
         "\f": "\\f",
         "\n": "\\n",
         "\r": "\\r",
         "\t": "\\t",
-        " ": " ",
     };
-    return str.replace(/["\\/\b\f\n\r\t]|[/][/]/g, (char) => escp[char]);
+    return str.replace(/["\\\b\f\n\r\t]/g, (char) => escp[char]);
 }
 //use === bcs we dont need type to type
 function stringify(value) {
@@ -27,7 +24,7 @@ function stringify(value) {
         return isFinite(value) ? String(value) : "null";
     }
     if (typeof value === "string") {
-        return escape(value);
+        return `"${escape(value)}"`;
     }
     if (typeof value === "boolean") {
         return String(value);
@@ -53,7 +50,7 @@ function stringify(value) {
     if (typeof value === "object") {
         const pairs = Object.keys(value)
             .filter((key) => !special(value[key]))
-            .map((key) => `"${key}":${stringify(value[key])}`);
+            .map((key) => `"${escape(key)}":${stringify(value[key])}`);
         return `{${pairs.join(",")}}`;
     }
 }
