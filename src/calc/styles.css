@@ -1,0 +1,187 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #000f0f;
+    font-family: "Courier New";
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 50px;
+}
+
+.calculator {
+    background-color: #000f0f;
+    width: 100%;
+    max-width: 800px;
+    padding: 30px;
+}
+
+.navigation-modes-container {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.navigation-mode-button {
+    padding: 10px 15px;
+    border: none;
+    background-color: #c20016;
+    cursor: pointer;
+}
+
+.navigation-mode-button.active {
+    background-color: #61000b;
+    color: white;
+}
+
+.operation-mode-card-container {
+    margin-top: 20px;
+}
+
+.basic-operations-input-group-container {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.number-input-field,
+.operator-select-field {
+    padding: 10px;
+    border: 1px solid #61000b;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.calculate-action-button {
+    padding: 10px 20px;
+    background-color: #ff001e;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.result-display-card-container {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #ff001e;
+    border: 1px solid #61000b;
+    border-radius: 4px;
+    font-size: 18px;
+}
+
+.negation-input-group-container {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.negation-input-group-container input {
+    flex: 1;
+    min-width: 200px;
+}
+
+.arrays-input-group-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.array-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.array-input-wrapper label {
+    min-width: 60px;
+    color: #333;
+    font-weight: 500;
+}
+
+.array-input-field {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #61000b;
+    border-radius: 4px;
+    font-size: 16px;
+    min-width: 200px;
+}
+
+.array-input-field:focus {
+    outline: none;
+    border-color: #61000b;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.mean-controls-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.mean-count-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.mean-count-control label {
+    color: #333;
+    font-weight: 500;
+}
+
+.mean-count-input {
+    width: 80px;
+    padding: 8px;
+    border: 1px solid #61000b;
+    border-radius: 4px;
+    font-size: 16px;
+    text-align: center;
+}
+
+.mean-fields-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #61000b;
+}
+
+.mean-number-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mean-number-field label {
+    min-width: 60px;
+    color: #555;
+    font-size: 14px;
+}
+
+.mean-number-field input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #61000b;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.mean-number-field input:focus {
+    outline: none;
+    border-color: #61000b;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}

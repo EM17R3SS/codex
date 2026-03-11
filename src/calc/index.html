@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Calculator</title>
+        <link rel="stylesheet" href="styles.css" />
+    </head>
+    <body>
+        <div class="calculator">
+            <h1 style="color: white">Calculator</h1>
+
+            <div class="navigation-modes-container">
+                <button
+                    class="navigation-mode-button"
+                    data-selected-mode="basic-operations"
+                >
+                    BASIC OPERATION
+                </button>
+                <button
+                    class="navigation-mode-button"
+                    data-selected-mode="arrays-operations"
+                >
+                    ARRAYS
+                </button>
+                <button
+                    class="navigation-mode-button"
+                    data-selected-mode="negation-operation"
+                >
+                    REJECTION
+                </button>
+                <button
+                    class="navigation-mode-button"
+                    data-selected-mode="arithmetic-mean-operation"
+                >
+                    ARITHMETIC MEAN
+                </button>
+                <button
+                    class="navigation-mode-button"
+                    data-selected-mode="images-operations"
+                >
+                    PICTURES
+                </button>
+                <button
+                    class="navigation-mode-button"
+                    data-selected-mode="text-operations"
+                >
+                    TEXT EDITOR
+                </button>
+            </div>
+
+            <div
+                id="basic-operations-mode-container"
+                class="operation-mode-card-container"
+            >
+                <h2 style="color: white">BASIC OPERATIONS</h2>
+                <div class="basic-operations-input-group-container">
+                    <input
+                        type="number"
+                        id="basic-operations-first-number-input-field"
+                        class="number-input-field"
+                        placeholder="FIRST NUMBER"
+                    />
+                    <select
+                        id="basic-operations-mathematical-operator-selector"
+                        class="operator-select-field"
+                    >
+                        <option value="+">+</option>
+                        <option value="-">-</option>
+                        <option value="*">*</option>
+                        <option value="/">/</option>
+                    </select>
+                    <input
+                        type="number"
+                        id="basic-operations-second-number-input-field"
+                        class="number-input-field"
+                        placeholder="SECOND NUMBER"
+                    />
+                    <button
+                        id="basic-operations-calculate-result-button"
+                        class="calculate-action-button"
+                    >
+                        =
+                    </button>
+                </div>
+                <div
+                    class="result-display-card-container"
+                    id="basic-operations-result-display-container"
+                >
+                    RESULT:
+                </div>
+            </div>
+            <div
+                id="arrays-operations-mode-container"
+                class="operation-mode-card-container"
+                style="display: none"
+            >
+                <h2 style="color: white">ARRAYS OPERATIONS</h2>
+
+                <div class="arrays-input-group-container">
+                    <div class="array-input-wrapper">
+                        <label style="color: white">Array 1:</label>
+                        <input
+                            type="text"
+                            id="array-first-input-field"
+                            class="array-input-field"
+                            placeholder="1, 2, 3, 4"
+                        />
+                    </div>
+
+                    <div class="array-input-wrapper">
+                        <label style="color: white">Array 2:</label>
+                        <input
+                            type="text"
+                            id="array-second-input-field"
+                            class="array-input-field"
+                            placeholder="5, 6, 7, 8"
+                        />
+                    </div>
+
+                    <button
+                        id="arrays-calculate-button"
+                        class="calculate-action-button"
+                    >
+                        ADD ARRAYS
+                    </button>
+                </div>
+
+                <div
+                    class="result-display-card-container"
+                    id="arrays-result-display-container"
+                >
+                    RESULT:
+                </div>
+            </div>
+
+            <div
+                id="negation-operation-mode-container"
+                class="operation-mode-card-container"
+                style="display: none"
+            >
+                <h2 style="color: white">NEGATION OPERATION</h2>
+                <div class="negation-input-group-container">
+                    <input
+                        type="number"
+                        id="negation-input-field"
+                        class="number-input-field"
+                        placeholder="ENTER NUMBER"
+                    />
+                    <button
+                        id="negation-calculate-button"
+                        class="calculate-action-button"
+                    >
+                        NEGATE
+                    </button>
+                </div>
+                <div
+                    class="result-display-card-container"
+                    id="negation-result-display-container"
+                >
+                    RESULT:
+                </div>
+            </div>
+
+            <div
+                id="arithmetic-mean-operation-mode-container"
+                class="operation-mode-card-container"
+                style="display: none"
+            >
+                <h2 style="color: white">ARITHMETIC MEAN OPERATION</h2>
+
+                <div class="mean-controls-container">
+                    <div class="mean-count-control">
+                        <label style="color: white"
+                            >Number of fields (2-10):</label
+                        >
+                        <input
+                            type="number"
+                            id="mean-field-count-input"
+                            class="mean-count-input"
+                            min="2"
+                            max="10"
+                            value="3"
+                        />
+                        <button
+                            id="mean-generate-fields-button"
+                            class="calculate-action-button"
+                        >
+                            GENERATE
+                        </button>
+                    </div>
+
+                    <div
+                        class="mean-fields-container"
+                        id="mean-fields-container"
+                    ></div>
+
+                    <button
+                        id="mean-calculate-button"
+                        class="calculate-action-button"
+                        style="margin-top: 15px"
+                    >
+                        CALCULATE MEAN
+                    </button>
+                </div>
+
+                <div
+                    class="result-display-card-container"
+                    id="mean-result-display-container"
+                >
+                    RESULT:
+                </div>
+            </div>
+
+            <div
+                id="images-operations-mode-container"
+                class="operation-mode-card-container"
+                style="display: none"
+            >
+                <h2 style="color: white">IMAGES OPERATIONS</h2>
+            </div>
+
+            <div
+                id="text-operations-mode-container"
+                class="operation-mode-card-container"
+                style="display: none"
+            >
+                <h2 style="color: white">TEXT OPERATIONS</h2>
+            </div>
+
+            <script src="script.js"></script>
+        </div>
+    </body>
+</html>
