@@ -217,6 +217,70 @@
                 style="display: none"
             >
                 <h2 style="color: white">IMAGES OPERATIONS</h2>
+
+                <div class="images-controls-container">
+                    <div class="image-input-wrapper">
+                        <label style="color: white">Image 1:</label>
+                        <input
+                            type="file"
+                            id="image-first-input"
+                            class="image-input-field"
+                            accept="image/*"
+                        />
+                    </div>
+
+                    <div class="image-input-wrapper">
+                        <label style="color: white">Image 2:</label>
+                        <input
+                            type="file"
+                            id="image-second-input"
+                            class="image-input-field"
+                            accept="image/*"
+                        />
+                    </div>
+
+                    <div class="image-operation-selector">
+                        <label style="color: white">Operation:</label>
+                        <select
+                            id="image-operation-select"
+                            class="image-operation-select"
+                        >
+                            <option value="add">ADD IMAGES</option>
+                            <option value="mask">CUT BY MASK</option>
+                        </select>
+                        <label style="color: white">Threshold (0-255):</label>
+                        <input
+                            type="range"
+                            id="threshold-slider"
+                            min="0"
+                            max="255"
+                            value="128"
+                        />
+                    </div>
+
+                    <button
+                        id="image-process-button"
+                        class="calculate-action-button"
+                    >
+                        PROCESS
+                    </button>
+                </div>
+
+                <div class="images-preview-container">
+                    <canvas
+                        id="image-canvas"
+                        class="image-canvas"
+                        width="400"
+                        height="300"
+                    ></canvas>
+                </div>
+
+                <div
+                    class="result-display-card-container"
+                    id="image-result-display-container"
+                >
+                    RESULT:
+                </div>
             </div>
 
             <div
@@ -225,6 +289,51 @@
                 style="display: none"
             >
                 <h2 style="color: white">TEXT OPERATIONS</h2>
+                <div class="text-controls-container">
+                    <div class="text-input-wrapper">
+                        <label style="color: white">Input Text:</label>
+                        <textarea
+                            id="text-input-area"
+                            class="text-input-field"
+                            rows="5"
+                            placeholder="Enter your text here: "
+                        ></textarea>
+                    </div>
+                    <div class="text-replace-controls">
+                        <div class="replace-input-group">
+                            <label style="color: white">Find:</label>
+                            <input
+                                type="text"
+                                id="text-find-input"
+                                class="text-find-field"
+                                placeholder="character to find"
+                                maxlength="1"
+                            />
+                        </div>
+                        <div class="replace-input-group">
+                            <label style="color: white">Replace with:</label>
+                            <input
+                                type="text"
+                                id="text-replace-input"
+                                class="text-replace-field"
+                                placeholder="new character"
+                                maxlength="1"
+                            />
+                        </div>
+                        <button
+                            id="text-replace-button"
+                            class="calculate-action-button"
+                        >
+                            REPLACE
+                        </button>
+                    </div>
+                </div>
+                <div
+                    class="result-display-card-container"
+                    id="text-result-display-container"
+                >
+                    RESULT:
+                </div>
             </div>
 
             <script src="script.js"></script>

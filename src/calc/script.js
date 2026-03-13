@@ -11,9 +11,11 @@ document.addEventListener("DOMContentLoaded", function () {
         operationModeCardContainers.forEach((modeCard) => {
             modeCard.style.display = "none";
         });
+
         const activeModeContainer = document.getElementById(
             modeIdentifier + "-mode-container",
         );
+
         if (activeModeContainer) {
             activeModeContainer.style.display = "block";
         }
@@ -25,7 +27,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 buttonElement.classList.remove("active");
             });
             this.classList.add("active");
+
             const selectedModeIdentifier = this.dataset.selectedMode;
+
             switchActiveOperationMode(selectedModeIdentifier);
         });
     });
@@ -78,6 +82,28 @@ document.addEventListener("DOMContentLoaded", function () {
         "mean-calculate-button",
     );
     const meanResult = document.getElementById("mean-result-display-container");
+    const textInput = document.getElementById("text-input-area");
+    const textFindInput = document.getElementById("text-find-input");
+    const textReplaceInput = document.getElementById("text-replace-input");
+    const textReplaceButton = document.getElementById("text-replace-button");
+    const textResult = document.getElementById("text-result-display-container");
+    const imageFirstInput = document.getElementById("image-first-input");
+    const imageSecondInput = document.getElementById("image-second-input");
+    const imageOperationSelect = document.getElementById(
+        "image-operation-select",
+    );
+    const imageProcessButton = document.getElementById("image-process-button");
+    const imageCanvas = document.getElementById("image-canvas");
+    const imageResult = document.getElementById(
+        "image-result-display-container",
+    );
+    const thresholdSlider = document.getElementById("threshold-slider");
+    const thresholdValue = document.getElementById("threshold-value");
+    if (thresholdSlider) {
+        thresholdSlider.addEventListener("input", function () {
+            thresholdValue.textContent = this.value;
+        });
+    }
 
     function calculator() {
         const alpha = parseFloat(firstNumber.value);
@@ -86,7 +112,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (isNaN(alpha) || isNaN(beta)) {
             resultDiv.textContent = "ERROR: NaN";
-
             return;
         }
 
@@ -105,7 +130,6 @@ document.addEventListener("DOMContentLoaded", function () {
             case "/":
                 if (beta === 0) {
                     resultDiv.textContent = "ERROR: Second Number is 0";
-
                     return;
                 }
                 result = alpha / beta;
@@ -124,9 +148,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (isNaN(value)) {
             negationResult.textContent = "ERROR: NaN";
+            return;
         }
 
         const result = -value;
+
         negationResult.textContent = `RESULT: ${result}`;
     }
 
@@ -162,13 +188,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (array1.length === 0 || array2.length === 0) {
             arraysResult.textContent = "ERROR: Invalid Array";
-
             return;
         }
 
         const sumArray = addArrays(array1, array2);
 
-        arraysResult.textContent = `RESULT: ${sumArray}`;
+        arraysResult.textContent = `RESULT: [${sumArray.join(", ")}]`;
     }
 
     arraysButton.addEventListener("click", calculateArrays);
@@ -200,6 +225,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     meanGenerateButton.addEventListener("click", function () {
         let fieldCount = parseInt(meanCountInput.value);
+
         if (isNaN(fieldCount) || fieldCount < 2) {
             fieldCount = 2;
             meanCountInput.value = 2;
@@ -207,6 +233,7 @@ document.addEventListener("DOMContentLoaded", function () {
             fieldCount = 10;
             meanCountInput.value = 10;
         }
+
         generateNumberFields(fieldCount);
     });
 
@@ -233,4 +260,168 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     meanCalculateButton.addEventListener("click", calculateMean);
+
+    function replaceCharacters() {
+        const originalText = textInput.value;
+        const findChar = textFindInput.value;
+        const replaceChar = textReplaceInput.value;
+
+        if (!originalText.trim()) {
+            textResult.textContent = "ERROR: Enter Some Text";
+            return;
+        }
+
+        if (!findChar) {
+            textResult.textContent = "RESULT: Enter Char to Find";
+            return;
+        }
+
+        let resultText;
+
+        if (replaceChar === "") {
+            resultText = originalText.split(findChar).join("");
+        } else {
+            resultText = originalText.split(findChar).join(replaceChar);
+        }
+
+        const replaceCnt = (originalText.match(new RegExp(findChar, "g")) || [])
+            .length;
+
+        textResult.textContent = `RESULT: ${resultText}`;
+    }
+
+    textReplaceButton.addEventListener("click", replaceCharacters);
+
+    let ctx = imageCanvas.getContext("2d");
+
+    function loadImage(file) {
+        return new Promise((resolve, reject) => {
+            if (!file) {
+                reject("ERROR: No File");
+                return;
+            }
+
+            const reader = new FileReader();
+            const img = new Image();
+
+            reader.onload = function (e) {
+                img.onload = function () {
+                    resolve(img);
+                };
+                img.src = e.target.result;
+            };
+
+            reader.onerror = function () {
+                reject("ERROR: Loading File");
+            };
+
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function drawImageOnCanvas(img, x, y, width, height) {
+        ctx.drawImage(img, x, y, width, height);
+    }
+
+    function addImages(img1, img2) {
+        imageCanvas.width = img1.width;
+        imageCanvas.height = img1.height;
+
+        ctx.drawImage(img1, 0, 0);
+
+        const image1Data = ctx.getImageData(0, 0, img1.width, img1.height);
+
+        ctx.drawImage(img2, 0, 0, img1.width, img2.height);
+
+        const image2Data = ctx.getImageData(0, 0, img1.width, img1.height);
+        const resultData = ctx.createImageData(img1.width, img1.height);
+
+        for (let i = 0; i < image1Data.data.length; i += 4) {
+            resultData.data[i] = Math.min(
+                255,
+                image1Data.data[i] + image2Data.data[i],
+            );
+            resultData.data[i + 1] = Math.min(
+                255,
+                image1Data.data[i + 1] + image2Data.data[i + 1],
+            );
+            resultData.data[i + 2] = Math.min(
+                255,
+                image1Data.data[i + 2] + image2Data.data[i + 2],
+            );
+            resultData.data[i + 3] = 255;
+        }
+
+        ctx.putImageData(resultData, 0, 0);
+    }
+
+    //const threshold = document.getElementById("threshold-slider").value;
+
+    function createMask(img, thresholdValue) {
+        imageCanvas.width = img.width;
+        imageCanvas.height = img.height;
+
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, img.width, img.height);
+
+        for (let i = 0; i < imageData.data.length; i += 4) {
+            const brightness =
+                (imageData.data[i] +
+                    imageData.data[i + 1] +
+                    imageData.data[i + 2]) /
+                3;
+
+            if (brightness > thresholdValue) {
+                imageData.data[i + 3] = 0;
+            } else {
+                imageData.data[i] = 0;
+                imageData.data[i + 1] = 0;
+                imageData.data[i + 2] = 0;
+                imageData.data[i + 3] = 255;
+            }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+    }
+
+    imageProcessButton.addEventListener("click", async function () {
+        const file1 = imageFirstInput.files[0];
+        const file2 = imageSecondInput.files[0];
+        const operation = imageOperationSelect.value;
+
+        if (!file1) {
+            imageResult.textContent = "ERROR: Please Select First Image";
+            return;
+        }
+
+        imageResult.textContent = "RESULT: Processing...";
+
+        try {
+            if (operation === "add") {
+                if (!file2) {
+                    imageResult.textContent =
+                        "ERROR: Please Select Second Image";
+                    return;
+                }
+
+                const img1 = await loadImage(file1);
+                const img2 = await loadImage(file2);
+
+                addImages(img1, img2);
+                imageResult.textContent = "RESULT: Images Added Successfully";
+            } else if (operation === "mask") {
+                const img = await loadImage(file1);
+
+                const currentThreshold = thresholdSlider
+                    ? parseInt(thresholdSlider.value)
+                    : 128;
+
+                createMask(img, currentThreshold);
+                imageResult.textContent = `RESULT: Mask Created Successfully (threshold: ${currentThreshold})`;
+            }
+        } catch (error) {
+            imageResult.textContent = "ERROR: Failed to Process Image";
+            console.error(error);
+        }
+    });
 });
