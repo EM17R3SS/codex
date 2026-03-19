@@ -160,39 +160,63 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function parserString(inputString) {
         if (!inputString.trim()) {
-            return [];
+            return { values: [], isValid: false, error: "Empty input" };
         }
 
-        return inputString
-            .split(",")
-            .map((item) => parseFloat(item.trim()))
-            .filter((item) => !isNaN(item));
-    }
+        const items = inputString.split(",").map((item) => item.trim());
+        const values = [];
+        const invalidItems = [];
 
+        items.forEach((item, index) => {
+            const num = parseFloat(item);
+            if (isNaN(num)) {
+                invalidItems.push(`"${item}" at position ${index + 1}`);
+            } else {
+                values.push(num);
+            }
+        });
+
+        if (invalidItems.length > 0) {
+            return {
+                values: values,
+                isValid: false,
+                error: `Invalid numbers: ${invalidItems.join(", ")}`,
+            };
+        }
+
+        return { values: values, isValid: true, error: null };
+    }
     function addArrays(arr1, arr2) {
+        if (arr1.length !== arr2.length) {
+            arraysResult.textContent = `WARNING: Different lengths (${arr1.length} vs ${arr2.length}), missing elements treated as 0`;
+        }
+
         const maxLength = Math.max(arr1.length, arr2.length);
         const result = [];
 
         for (let i = 0; i < maxLength; i++) {
             const value1 = i < arr1.length ? arr1[i] : 0;
             const value2 = i < arr2.length ? arr2[i] : 0;
-
             result.push(value1 + value2);
         }
 
         return result;
     }
     function calculateArrays() {
-        const array1 = parserString(arrayFirstInput.value);
-        const array2 = parserString(arraySecondInput.value);
+        const result1 = parserString(arrayFirstInput.value);
+        const result2 = parserString(arraySecondInput.value);
 
-        if (array1.length === 0 || array2.length === 0) {
-            arraysResult.textContent = "ERROR: Invalid Array";
+        if (!result1.isValid || !result2.isValid) {
+            arraysResult.textContent = `ERROR: ${result1.error || result2.error}`;
             return;
         }
 
-        const sumArray = addArrays(array1, array2);
+        if (result1.values.length === 0 || result2.values.length === 0) {
+            arraysResult.textContent = "ERROR: Arrays cannot be empty";
+            return;
+        }
 
+        const sumArray = addArrays(result1.values, result2.values);
         arraysResult.textContent = `RESULT: [${sumArray.join(", ")}]`;
     }
 
@@ -284,8 +308,8 @@ document.addEventListener("DOMContentLoaded", function () {
             resultText = originalText.split(findChar).join(replaceChar);
         }
 
-        const replaceCnt = (originalText.match(new RegExp(findChar, "g")) || [])
-            .length;
+        // const replaceCnt = (originalText.match(new RegExp(findChar, "g")) || [])
+        //     .length;
 
         textResult.textContent = `RESULT: ${resultText}`;
     }
@@ -324,17 +348,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function addImages(img1, img2) {
-        imageCanvas.width = img1.width;
-        imageCanvas.height = img1.height;
+        const canvasWidth = Math.min(img1.width, img2.width);
+        const canvasHeight = Math.min(img1.height, img2.height);
 
-        ctx.drawImage(img1, 0, 0);
+        imageCanvas.width = canvasWidth;
+        imageCanvas.height = canvasHeight;
 
-        const image1Data = ctx.getImageData(0, 0, img1.width, img1.height);
+        ctx.drawImage(img1, 0, 0, canvasWidth, canvasHeight);
+        const image1Data = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
 
-        ctx.drawImage(img2, 0, 0, img1.width, img2.height);
+        ctx.drawImage(img2, 0, 0, canvasWidth, canvasHeight);
+        const image2Data = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
 
-        const image2Data = ctx.getImageData(0, 0, img1.width, img1.height);
-        const resultData = ctx.createImageData(img1.width, img1.height);
+        const resultData = ctx.createImageData(canvasWidth, canvasHeight);
 
         for (let i = 0; i < image1Data.data.length; i += 4) {
             resultData.data[i] = Math.min(
@@ -361,7 +387,7 @@ document.addEventListener("DOMContentLoaded", function () {
         imageCanvas.width = img.width;
         imageCanvas.height = img.height;
 
-        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(img, 0, 0, img.width, img.height);
         const imageData = ctx.getImageData(0, 0, img.width, img.height);
 
         for (let i = 0; i < imageData.data.length; i += 4) {
