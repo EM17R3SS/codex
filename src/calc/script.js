@@ -187,12 +187,13 @@ document.addEventListener("DOMContentLoaded", function () {
         return { values: values, isValid: true, error: null };
     }
     function addArrays(arr1, arr2) {
-        if (arr1.length !== arr2.length) {
-            arraysResult.textContent = `WARNING: Different lengths (${arr1.length} vs ${arr2.length}), missing elements treated as 0`;
-        }
-
         const maxLength = Math.max(arr1.length, arr2.length);
         const result = [];
+        let warning = null;
+
+        if (arr1.length !== arr2.length) {
+            warning = `WARNING: Different lengths (${arr1.length} vs ${arr2.length}), missing elements treated as 0\n`;
+        }
 
         for (let i = 0; i < maxLength; i++) {
             const value1 = i < arr1.length ? arr1[i] : 0;
@@ -200,8 +201,9 @@ document.addEventListener("DOMContentLoaded", function () {
             result.push(value1 + value2);
         }
 
-        return result;
+        return { result, warning };
     }
+
     function calculateArrays() {
         const result1 = parserString(arrayFirstInput.value);
         const result2 = parserString(arraySecondInput.value);
@@ -216,8 +218,14 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        const sumArray = addArrays(result1.values, result2.values);
-        arraysResult.textContent = `RESULT: [${sumArray.join(", ")}]`;
+        const { result: sumArray, warning } = addArrays(
+            result1.values,
+            result2.values,
+        );
+
+        arraysResult.textContent = warning
+            ? `${warning}RESULT: [${sumArray.join(", ")}]`
+            : `RESULT: [${sumArray.join(", ")}]`;
     }
 
     arraysButton.addEventListener("click", calculateArrays);
