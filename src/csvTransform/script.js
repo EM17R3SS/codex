@@ -41,11 +41,12 @@ class CSVTransform extends Transform {
     transformLine(line) {
         const fields = line.split(",");
 
-        if (fields.length < 2) return line;
+        if (fields.length < 2) return line; //check for 2 fields (ex: id, name), else return
 
-        const headers = this.header.split(",");
+        const headers = this.header.split(","); //to name fields
         const nameIndex = headers.findIndex(
-            (h) => h.trim().toLowerCase() === "name",
+            //find by index name
+            (h) => h.trim().toLowerCase() === "name", //only for Name name NAME etc
         );
 
         if (nameIndex !== -1 && fields[nameIndex]) {
