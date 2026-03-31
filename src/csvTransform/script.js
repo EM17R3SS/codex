@@ -1,0 +1,79 @@
+const fs = require("fs");
+const path = require("path");
+const { Transform, pipeline } = require("stream");
+const { promisify } = require("util");
+const pipelineAsync = promisify(pipeline);
+
+class CSVTransform extends Transform {
+    constructor() {
+        super(); //parent constructor
+        this.firstLine = true; //header
+        this.buffer = "";
+        this.header = null;
+    }
+
+    _transform(chunk, encoding, callback) {
+        this.buffer += chunk.toString();
+
+        const lines = this.buffer.split("\n");
+
+        this.buffer = lines.pop();
+        for (const line of lines) {
+            this.processLine(line);
+        }
+
+        callback();
+    }
+    processLine(line) {
+        if (!line.trim()) return;
+
+        if (this.firstLine) {
+            this.header = line;
+            this.push(line + "\n");
+            this.firstLine = false;
+            return;
+        }
+
+        const transformed = this.transformLine(line);
+        this.push(transformed + "\n");
+    }
+
+    transformLine(line) {
+        const fields = line.split(",");
+
+        if (fields.length < 2) return line;
+
+        const headers = this.header.split(",");
+        const nameIndex = headers.findIndex(
+            (h) => h.trim().toLowerCase() === "name",
+        );
+
+        if (nameIndex !== -1 && fields[nameIndex]) {
+            fields[nameIndex] = fields[nameIndex].toUpperCase();
+        }
+
+        return fields.join(",");
+    }
+    _flush(callback) {
+        if (this.buffer.trim()) {
+            this.processLine(this.buffer);
+        }
+        callback();
+    }
+}
+
+async function processCSV() {
+    try {
+        const readStream = fs.createReadStream("input.csv", "utf8");
+        const writeStream = fs.createWriteStream("output.csv");
+        const transformer = new CSVTransform();
+
+        await pipelineAsync(readStream, transformer, writeStream);
+
+        console.log("DONE");
+    } catch (err) {
+        console.error("ERROR:", err.message);
+    }
+}
+
+processCSV();
