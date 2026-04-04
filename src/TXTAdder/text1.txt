@@ -1,0 +1,11 @@
+id,name,email,age,country
+1,ivan ivanov,ivan@example.com,25,Russia
+2,Anna Petrova,anna.p@example.com,30,Ukraine
+3,john doe,john.doe@example.com,22,USA
+4,MARIA GARCIA,maria.g@example.com,28,Spain
+5,li wei,li.wei@example.com,35,China
+6,O'Connor,oconnor@example.com,40,Ireland
+7,Jean-Luc Picard,picard@example.com,59,France
+8,anna-smith,anna.smith@example.com,27,UK
+9,,no_name@example.com,20,Germany
+10,ivan ivanov,duplicate@example.com,25,Russia

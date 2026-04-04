@@ -1,0 +1,33 @@
+id,name,email,age,country
+1,ivan ivanov,ivan@example.com,25,Russia
+2,Anna Petrova,anna.p@example.com,30,Ukraine
+3,john doe,john.doe@example.com,22,USA
+4,MARIA GARCIA,maria.g@example.com,28,Spain
+5,li wei,li.wei@example.com,35,China
+6,O'Connor,oconnor@example.com,40,Ireland
+7,Jean-Luc Picard,picard@example.com,59,France
+8,anna-smith,anna.smith@example.com,27,UK
+9,,no_name@example.com,20,Germany
+10,ivan ivanov,duplicate@example.com,25,Russia
+
+11,lucAs mArtinez,lucas.martinez@example.com,29,Spain
+12,olivia wIlson,olivia.wilson@example.com,31,USA
+13,liaM anderson,liam.anderson@example.com,26,UK
+14,mia thomas,,33,Germany
+15,noah taylor,noah.taylor@example.com,,France
+16,isabella moore,isabella.moore@example.com,34,
+17,ethan jackson,,,
+18,,,,
+19,alexander harris,alexander.harris@example.com,36,USA
+20,charlotte martin,charlotte.martin@example.com,27,UK
+
+21,benjamin thompson,benjamin.thompson@example.com,31,Germany
+22,ava garcia,ava.garcia@example.com,25,Spain
+23,william rodriguez,william.rodriguez@example.com,38,USA
+24,emily martinez,emily.martinez@example.com,29,Mexico
+25,james davis,james.davis@example.com,33,Canada
+26,sofia rodriguez,sofia.rodriguez@example.com,26,Brazil
+27,logan wilson,logan.wilson@example.com,30,USA
+28,ella anderson,ella.anderson@example.com,24,UK
+29,mason taylor,mason.taylor@example.com,35,France
+30,grace thomas,grace.thomas@example.com,28,Germany
