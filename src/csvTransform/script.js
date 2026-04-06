@@ -10,6 +10,7 @@ class CSVTransform extends Transform {
         this.firstLine = true; //header
         this.buffer = "";
         this.header = null;
+        this.nameIndex = null;
     }
 
     _transform(chunk, encoding, callback) {
@@ -29,6 +30,10 @@ class CSVTransform extends Transform {
 
         if (this.firstLine) {
             this.header = line;
+            const headers = this.header.split(",");
+            this.nameIndex = headers.findIndex(
+                (h) => h.trim().toLowerCase() === "name",
+            );
             this.push(line + "\n");
             this.firstLine = false;
             return;
@@ -41,17 +46,27 @@ class CSVTransform extends Transform {
     transformLine(line) {
         const fields = line.split(",");
 
-        if (fields.length < 2) return line; //check for 2 fields (ex: id, name), else return
-
-        const headers = this.header.split(","); //to name fields
-        const nameIndex = headers.findIndex(
-            //find by index name
-            (h) => h.trim().toLowerCase() === "name", //only for Name name NAME etc
-        );
-
-        if (nameIndex !== -1 && fields[nameIndex]) {
-            fields[nameIndex] = fields[nameIndex].toUpperCase();
+        if (this.nameIndex === -1) {
+            return line;
         }
+        if (fields.length <= this.nameIndex) {
+            return line;
+        }
+        if (fields[this.nameIndex]) {
+            fields[this.nameIndex] = fields[this.nameIndex].toUpperCase();
+        }
+
+        //if (fields.length < 2) return line; //check for 2 fields (ex: id, name), else return
+
+        // const headers = this.header.split(","); //to name fields
+        // const nameIndex = headers.findIndex(
+        //     //find by index name
+        //     (h) => h.trim().toLowerCase() === "name", //only for Name name NAME etc
+        // );
+
+        // if (nameIndex !== -1 && fields[nameIndex]) {
+        //     fields[nameIndex] = fields[nameIndex].toUpperCase();
+        // }
 
         return fields.join(",");
     }
