@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{title}} | Node.js HTTP Server</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <nav class="navbar">
+            <div class="container">
+                <div class="nav-brand">
+                    <a href="/">NodeJS Server</a>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="/">Главная</a></li>
+                    <li><a href="/about">О нас</a></li>
+                    <li><a href="/contact">Контакты</a></li>
+                    <li><a href="/login" class="active">Вход</a></li>
+                    <li><a href="/api/users">Пользователи</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="main">
+            <div class="container">
+                <div class="login-wrapper">
+                    <div class="login-container">
+                        <div class="login-header">
+                            <h2>Вход в систему</h2>
+                            <p>Введите свои данные для входа</p>
+                        </div>
+
+                        <form method="POST" action="/login" class="login-form">
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    placeholder="example@mail.com"
+                                    required
+                                />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="password">Пароль</label>
+                                <input
+                                    type="password"
+                                    id="password"
+                                    name="password"
+                                    placeholder="-----------"
+                                    required
+                                />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="checkbox">
+                                    <input type="checkbox" name="remember" />
+                                    Запомнить меня
+                                </label>
+                            </div>
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary btn-block"
+                            >
+                                Войти
+                            </button>
+                        </form>
+
+                        <div class="login-info">
+                            <div class="info-box">
+                                <h4>Тестовые данные:</h4>
+                                <p>
+                                    <strong>Email:</strong> любой
+                                    зарегистрированный email
+                                </p>
+                                <p><strong>Пароль:</strong> password123</p>
+                                <hr />
+                                <p>
+                                    <small
+                                        >Сначала добавьте пользователя через
+                                        <a href="/api/users"
+                                            >список пользователей</a
+                                        ></small
+                                    >
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="login-footer">
+                            <a href="/">Вернуться на главную</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="container">
+                <p>&copy; 2026 Node.js HTTP Server. Все права защищены.</p>
+            </div>
+        </footer>
+    </body>
+</html>
