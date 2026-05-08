@@ -8,6 +8,7 @@ const logger = require("./middleware/logger");
 const bodyParser = require("./middleware/bodyParser");
 const errorHandler = require("./middleware/errorHandler");
 const ResponseHelper = require("./utils/response");
+const serveStatic = require("./utils/static");
 
 class Server {
     constructor() {
@@ -15,35 +16,32 @@ class Server {
         this.server = http.createServer(this.requestHandler.bind(this));
     }
 
-    serveStatic(req, res) {
-        const urlObj = new URL(req.url, `http://${req.headers.host}`);
-        const pathname = urlObj.pathname;
+    // async serveStatic(req, res) {
+    //     const urlObj = new URL(req.url, `http://${req.headers.host}`);
+    //     const pathname = urlObj.pathname;
 
-        if (!pathname.startsWith("/css/") && !pathname.startsWith("/js/")) {
-            return false;
-        }
+    //     if (!pathname.startsWith("/css/") && !pathname.startsWith("/js/")) {
+    //         return false;
+    //     }
 
-        const filePath = path.join(__dirname, "public", pathname);
-        const ext = path.extname(filePath).slice(1);
-        const contentType = config.MIME_TYPES[ext] || "text/plain";
+    //     const filePath = path.join(__dirname, "public", pathname);
+    //     const ext = path.extname(filePath).slice(1);
+    //     const contentType = config.MIME_TYPES[ext] || "text/plain";
 
-        try {
-            if (fs.existsSync(filePath)) {
-                const content = fs.readFileSync(filePath);
-                res.writeHead(config.STATUS_CODES.OK, {
-                    "Content-Type": contentType,
-                });
-                res.end(content);
-                return true;
-            }
-        } catch (err) {
-            return false;
-        }
-        return false;
-    }
+    //     try {
+    //         const content = await fs.promises.readFile(filePath);
+    //         res.writeHead(config.STATUS_CODES.OK, {
+    //             "Content-Type": contentType,
+    //         });
+    //         res.end(content);
+    //         return true;
+    //     } catch (err) {
+    //         return false;
+    //     }
+    // }
 
-    requestHandler(req, res) {
-        if (this.serveStatic(req, res)) {
+    async requestHandler(req, res) {
+        if (await serveStatic(req, res)) {
             return;
         }
 

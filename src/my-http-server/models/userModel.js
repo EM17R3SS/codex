@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 
 const USERS_FILE = path.join(__dirname, "../data/users.json");
@@ -6,25 +6,33 @@ const USERS_FILE = path.join(__dirname, "../data/users.json");
 class UserModel {
     constructor() {
         this.users = [];
-        this.loadUsers();
+        this.init();
     }
 
-    loadUsers() {
+    async init() {
+        await this.loadUsers();
+    }
+
+    async loadUsers() {
         try {
-            if (fs.existsSync(USERS_FILE)) {
-                const data = fs.readFileSync(USERS_FILE, "utf8");
-                this.users = JSON.parse(data);
-            }
+            const data = await fs.readFile(USERS_FILE, "utf8");
+            this.users = JSON.parse(data);
         } catch (err) {
-            this.users = [];
+            if (err.code === "ENOENT") {
+                this.users = [];
+            } else {
+                console.error("Ошибка загрузки users.json:", err.message);
+                this.users = [];
+            }
         }
     }
 
-    saveUsers() {
+    async saveUsers() {
         try {
-            fs.writeFileSync(USERS_FILE, JSON.stringify(this.users, null, 2));
+            await fs.writeFile(USERS_FILE, JSON.stringify(this.users, null, 2));
             return true;
         } catch (err) {
+            console.error("Ошибка сохранения users.json:", err.message);
             return false;
         }
     }
@@ -33,7 +41,7 @@ class UserModel {
         return this.users;
     }
 
-    add(user) {
+    async add(user) {
         const newUser = {
             id: Date.now(),
             name: user.name,
@@ -41,8 +49,17 @@ class UserModel {
             createdAt: new Date().toISOString(),
         };
         this.users.push(newUser);
-        this.saveUsers();
+        await this.saveUsers();
         return newUser;
+    }
+
+    async delete(id) {
+        const index = this.users.findIndex((u) => u.id == id);
+        if (index === -1) return false;
+
+        this.users.splice(index, 1);
+        await this.saveUsers();
+        return true;
     }
 
     findByEmail(email) {

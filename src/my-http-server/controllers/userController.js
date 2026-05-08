@@ -8,8 +8,8 @@ const templateEngine = new TemplateEngine(
 );
 
 class UserController {
-    static getUsers(req, res) {
-        const users = userService.getUsers();
+    static async getUsers(req, res) {
+        const users = await userService.getUsers();
 
         const url = new URL(req.url, `http://${req.headers.host}`);
         const format = url.searchParams.get("format");
@@ -17,7 +17,7 @@ class UserController {
         if (format === "json") {
             ResponseHelper.sendJSON(res, { users, count: users.length });
         } else {
-            const html = templateEngine.render("userList.html", {
+            const html = await templateEngine.render("userList.html", {
                 users: JSON.stringify(users),
                 userCount: users.length,
             });
@@ -25,9 +25,26 @@ class UserController {
         }
     }
 
-    static postUsers(req, res) {
+    static async getUserById(req, res) {
+        const { id } = req.params;
+        const users = await userService.getUsers();
+        const user = users.find((u) => u.id == id);
+
+        if (!user) {
+            ResponseHelper.sendJSON(
+                res,
+                { error: "Пользователь не найден" },
+                404,
+            );
+            return;
+        }
+
+        ResponseHelper.sendJSON(res, { user });
+    }
+
+    static async postUsers(req, res) {
         try {
-            const newUser = userService.addUser(req.body);
+            const newUser = await userService.addUser(req.body);
             ResponseHelper.sendJSON(
                 res,
                 {
@@ -47,6 +64,25 @@ class UserController {
                 400,
             );
         }
+    }
+
+    static async deleteUser(req, res) {
+        const { id } = req.params;
+        const deleted = await userService.deleteUser(id);
+
+        if (!deleted) {
+            ResponseHelper.sendJSON(
+                res,
+                { error: "Пользователь не найден" },
+                404,
+            );
+            return;
+        }
+
+        ResponseHelper.sendJSON(res, {
+            success: true,
+            message: "Пользователь удалён",
+        });
     }
 }
 

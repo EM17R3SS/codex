@@ -7,35 +7,35 @@ const templateEngine = new TemplateEngine(
 );
 
 class PageController {
-    static getHome(req, res) {
-        const html = templateEngine.render("home.html", {
+    static async getHome(req, res) {
+        const html = await templateEngine.render("home.html", {
             title: "Главная страница",
             content: "Добро пожаловать на наш сайт",
         });
         ResponseHelper.sendHTML(res, html);
     }
 
-    static getAbout(req, res) {
-        const html = templateEngine.render("about.html", {
+    static async getAbout(req, res) {
+        const html = await templateEngine.render("about.html", {
             title: "О нас",
-            companyName: "Node.js Master",
-            experience: "3 года",
-            projects: "25+",
+            companyName: "",
+            experience: "",
+            projects: "",
         });
         ResponseHelper.sendHTML(res, html);
     }
 
-    static getContact(req, res) {
-        const html = templateEngine.render("contact.html", {
+    static async getContact(req, res) {
+        const html = await templateEngine.render("contact.html", {
             title: "Контакты",
             email: "info@example.com",
-            phone: "+7 (123) 456-78-90",
+            phone: "+7",
         });
         ResponseHelper.sendHTML(res, html);
     }
 
-    static getLogin(req, res) {
-        const html = templateEngine.render("login.html", {
+    static async getLogin(req, res) {
+        const html = await templateEngine.render("login.html", {
             title: "Вход в систему",
         });
         ResponseHelper.sendHTML(res, html);

@@ -2,30 +2,65 @@ const pageRoutes = require("./routes/pageRoutes");
 const apiRoutes = require("./routes/apiRoutes");
 const ResponseHelper = require("./utils/response");
 const config = require("./config");
+const parseRoutePath = require("./utils/routeParser");
 
 class Router {
     constructor() {
-        this.routes = [...pageRoutes, ...apiRoutes];
+        this.staticRoutes = [];
+        this.dynamicRoutes = [];
+
+        const allRoutes = [...pageRoutes, ...apiRoutes];
+
+        for (const route of allRoutes) {
+            if (route.path.includes(":")) {
+                const { regex, paramNames } = parseRoutePath(route.path);
+                this.dynamicRoutes.push({
+                    ...route,
+                    regex,
+                    paramNames,
+                });
+            } else {
+                this.staticRoutes.push(route);
+            }
+        }
     }
 
     findRoute(method, pathname) {
-        return this.routes.find(
-            (route) => route.method === method && route.path === pathname,
-        );
+        for (const route of this.staticRoutes) {
+            if (route.method === method && route.path === pathname) {
+                return { route, params: {} };
+            }
+        }
+
+        for (const route of this.dynamicRoutes) {
+            if (route.method === method) {
+                const match = route.regex.exec(pathname);
+                if (match) {
+                    const params = {};
+                    for (let i = 0; i < route.paramNames.length; i++) {
+                        params[route.paramNames[i]] = match[i + 1];
+                    }
+                    return { route, params };
+                }
+            }
+        }
+
+        return null;
     }
 
     handle(req, res) {
         const url = new URL(req.url, `http://${req.headers.host}`);
         const pathname = url.pathname;
 
-        const route = this.findRoute(req.method, pathname);
+        const found = this.findRoute(req.method, pathname);
 
-        if (route) {
+        if (found) {
             req.query = {};
             for (const [key, value] of url.searchParams) {
                 req.query[key] = value;
             }
-            route.handler(req, res);
+            req.params = found.params;
+            found.route.handler(req, res);
         } else {
             const html = `
                 <!DOCTYPE html>

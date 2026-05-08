@@ -1,10 +1,9 @@
 async function addUser() {
     const name = document.getElementById("userName")?.value;
     const email = document.getElementById("userEmail")?.value;
-    const messageDiv = document.getElementById("addUserMessage");
 
     if (!name || !email) {
-        showMessage("Заполните все поля", "error", messageDiv);
+        showMessage("Заполните все поля", "error");
         return;
     }
 
@@ -18,13 +17,15 @@ async function addUser() {
         const result = await response.json();
 
         if (result.success) {
-            showMessage("Пользователь добавлен!", "success", messageDiv);
-            setTimeout(() => location.reload(), 1000);
+            showMessage("Пользователь добавлен!", "success");
+            refreshUsers();
+            document.getElementById("userName").value = "";
+            document.getElementById("userEmail").value = "";
         } else {
-            showMessage(result.error, "error", messageDiv);
+            showMessage(result.error, "error");
         }
     } catch (err) {
-        showMessage("Ошибка соединения с сервером", "error", messageDiv);
+        showMessage("Ошибка соединения", "error");
     }
 }
 
@@ -36,12 +37,13 @@ async function deleteUser(id) {
         const result = await response.json();
 
         if (result.success) {
-            location.reload();
+            showMessage("Пользователь удалён", "success");
+            refreshUsers();
         } else {
-            alert(result.error);
+            showMessage(result.error, "error");
         }
     } catch (err) {
-        alert("Ошибка при удалении");
+        showMessage("Ошибка при удалении", "error");
     }
 }
 
@@ -51,16 +53,17 @@ async function refreshUsers() {
         const data = await response.json();
 
         if (data.users) {
-            renderUsersTable(data.users);
-            document.getElementById("userCount").textContent =
-                data.users.length;
+            renderUsers(data.users);
+            const countSpan = document.getElementById("userCount");
+            if (countSpan) countSpan.textContent = data.users.length;
         }
     } catch (err) {
         console.error("Ошибка обновления:", err);
+        showMessage("Ошибка при обновлении", "error");
     }
 }
 
-function renderUsersTable(users) {
+function renderUsers(users) {
     const tbody = document.getElementById("usersBody");
     if (!tbody) return;
 
@@ -77,7 +80,7 @@ function renderUsersTable(users) {
             <td>${user.id}</td>
             <td>${escapeHtml(user.name)}</td>
             <td>${escapeHtml(user.email)}</td>
-            <td>${new Date(user.createdAt).toLocaleString("ru-RU")}</td>
+            <td>${user.createdAt ? new Date(user.createdAt).toLocaleString("ru-RU") : "—"}</td>
             <td><button class="btn-delete" onclick="deleteUser(${user.id})">Удалить</button></td>
         </tr>
     `,
@@ -85,13 +88,16 @@ function renderUsersTable(users) {
         .join("");
 }
 
-function showMessage(text, type, container) {
-    if (!container) return;
-    container.textContent = text;
-    container.className = `form-message ${type}`;
+function showMessage(message, type) {
+    const messageDiv = document.getElementById("addUserMessage");
+    if (!messageDiv) return;
+
+    messageDiv.textContent = message;
+    messageDiv.className = `form-message ${type}`;
+
     setTimeout(() => {
-        container.textContent = "";
-        container.className = "form-message";
+        messageDiv.textContent = "";
+        messageDiv.className = "form-message";
     }, 3000);
 }
 
@@ -112,15 +118,11 @@ function initContactForm() {
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const messageDiv = document.getElementById("formMessage");
-
-        const formData = {
-            name: document.getElementById("name")?.value,
-            email: document.getElementById("email")?.value,
-            message: document.getElementById("message")?.value,
-        };
-
-        showMessage("Спасибо! Сообщение отправлено.", "success", messageDiv);
+        showMessage("Спасибо! Сообщение отправлено.", "success");
         form.reset();
+        setTimeout(() => {
+            if (messageDiv) messageDiv.innerHTML = "";
+        }, 3000);
     });
 }
 

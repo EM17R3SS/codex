@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 
 class TemplateEngine {
@@ -7,29 +7,28 @@ class TemplateEngine {
         this.cache = {};
     }
 
-    loadTemplate(name) {
+    async loadTemplate(name) {
         if (this.cache[name]) {
             return this.cache[name];
-        } //save cache
+        }
+
         const filePath = path.join(this.templateDir, name);
 
         try {
-            const content = fs.readFileSync(filePath, "utf8");
-
-            this.cache[name] = content; //if ok: template to cache
-
+            const content = await fs.readFile(filePath, "utf8");
+            this.cache[name] = content;
             return content;
         } catch (err) {
-            console.error(`ERROR OF DOWNLOAD TEMP ${name}: `, err.message);
+            console.error(`Ошибка загрузки шаблона ${name}:`, err.message);
             return null;
         }
     }
 
-    render(templateName, data = {}) {
-        let template = this.loadTemplate(templateName);
+    async render(templateName, data = {}) {
+        let template = await this.loadTemplate(templateName);
 
         if (template === null) {
-            return "<h1>TEMP NOT FOUND</h1>";
+            return "<h1>Шаблон не найден</h1>";
         }
 
         for (let key in data) {

@@ -1,13 +1,13 @@
 module.exports = {
-    PORT: 6661, //xexexexexe
+    PORT: 3000, //xexexexexe
     HOST: "localhost", //base
 
     MIME_TYPES: {
         //readed and edit to this
-        html: "text/html; charset=utf8",
+        html: "text/html; charset=utf-8",
         css: "text/css",
         js: "application/javascript",
-        json: "application/json; charset=utf8",
+        json: "application/json; charset=utf-8",
     },
 
     STATUS_CODES: {
