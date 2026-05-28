@@ -19,7 +19,7 @@ class TemplateEngine {
             this.cache[name] = content;
             return content;
         } catch (err) {
-            console.error(`Ошибка загрузки шаблона ${name}:`, err.message);
+            console.error("Ошибка загрузки шаблона " + name + ":", err.message);
             return null;
         }
     }
@@ -32,7 +32,7 @@ class TemplateEngine {
         }
 
         for (let key in data) {
-            const regex = new RegExp(`{{${key}}}`, "g");
+            const regex = new RegExp("{{" + key + "}}", "g");
             template = template.replace(regex, data[key]);
         }
         return template;

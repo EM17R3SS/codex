@@ -9,36 +9,16 @@ const bodyParser = require("./middleware/bodyParser");
 const errorHandler = require("./middleware/errorHandler");
 const ResponseHelper = require("./utils/response");
 const serveStatic = require("./utils/static");
+const dotenv = require("dotenv");
+const dbConfig = require("./config/database");
+
+dotenv.config();
 
 class Server {
     constructor() {
         this.router = new Router();
         this.server = http.createServer(this.requestHandler.bind(this));
     }
-
-    // async serveStatic(req, res) {
-    //     const urlObj = new URL(req.url, `http://${req.headers.host}`);
-    //     const pathname = urlObj.pathname;
-
-    //     if (!pathname.startsWith("/css/") && !pathname.startsWith("/js/")) {
-    //         return false;
-    //     }
-
-    //     const filePath = path.join(__dirname, "public", pathname);
-    //     const ext = path.extname(filePath).slice(1);
-    //     const contentType = config.MIME_TYPES[ext] || "text/plain";
-
-    //     try {
-    //         const content = await fs.promises.readFile(filePath);
-    //         res.writeHead(config.STATUS_CODES.OK, {
-    //             "Content-Type": contentType,
-    //         });
-    //         res.end(content);
-    //         return true;
-    //     } catch (err) {
-    //         return false;
-    //     }
-    // }
 
     async requestHandler(req, res) {
         if (await serveStatic(req, res)) {
@@ -56,7 +36,21 @@ class Server {
         });
     }
 
-    start() {
+    async start() {
+        //db connect
+        if (dbConfig.orm === "mongoose") {
+            const { connectDB } = require("./db/mongoose");
+            await connectDB();
+        } else {
+            const { connectDB } = require("./db/sequelize");
+            await connectDB();
+        }
+
+        //model init
+        const userModel = require("./models_new");
+        await userModel.init();
+
+        //start
         this.server.listen(config.PORT, config.HOST, () => {
             console.log(`http://${config.HOST}:${config.PORT}`);
             console.log("\nAvailable routes:\n");

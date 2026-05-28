@@ -1,0 +1,2100 @@
+\n\n========== ./config/database.js ==========\n
+require("dotenv").config();
+
+module.exports = {
+    orm: process.env.DB_ORM || "sequelize",
+
+    sqlite: {
+        storage: process.env.SQLITE_STORAGE || "./data/database.sqlite",
+        dialect: "sqlite",
+    },
+
+    postgres: {
+        host: process.env.PG_HOST || "localhost",
+        port: process.env.PG_PORT || 5432,
+        user: process.env.PG_USER || "postgres",
+        password: process.env.PG_PASSWORD || "",
+        database: process.env.PG_DATABASE || "myapp",
+        dialect: "postgres",
+    },
+
+    mongodb: {
+        uri: process.env.MONGO_URI || "mongodb://localhost:27017/myapp",
+    },
+};
+\n\n========== ./router.js ==========\n
+const pageRoutes = require("./routes/pageRoutes");
+const apiRoutes = require("./routes/apiRoutes");
+const ResponseHelper = require("./utils/response");
+const config = require("./config");
+const parseRoutePath = require("./utils/routeParser");
+
+class Router {
+    constructor() {
+        this.staticRoutes = [];
+        this.dynamicRoutes = [];
+
+        const allRoutes = [...pageRoutes, ...apiRoutes];
+
+        for (const route of allRoutes) {
+            if (route.path.includes(":")) {
+                const { regex, paramNames } = parseRoutePath(route.path);
+                this.dynamicRoutes.push({
+                    ...route,
+                    regex,
+                    paramNames,
+                });
+            } else {
+                this.staticRoutes.push(route);
+            }
+        }
+    }
+
+    findRoute(method, pathname) {
+        for (const route of this.staticRoutes) {
+            if (route.method === method && route.path === pathname) {
+                return { route, params: {} };
+            }
+        }
+
+        for (const route of this.dynamicRoutes) {
+            if (route.method === method) {
+                const match = route.regex.exec(pathname);
+                if (match) {
+                    const params = {};
+                    for (let i = 0; i < route.paramNames.length; i++) {
+                        params[route.paramNames[i]] = match[i + 1];
+                    }
+                    return { route, params };
+                }
+            }
+        }
+
+        return null;
+    }
+
+    handle(req, res) {
+        const url = new URL(req.url, `http://${req.headers.host}`);
+        const pathname = url.pathname;
+
+        const found = this.findRoute(req.method, pathname);
+
+        if (found) {
+            req.query = {};
+            for (const [key, value] of url.searchParams) {
+                req.query[key] = value;
+            }
+            req.params = found.params;
+            found.route.handler(req, res);
+        } else {
+            const html = `
+                <!DOCTYPE html>
+                <html>
+                <head><meta charset="UTF-8"><title>404</title></head>
+                <body style="text-align:center; padding:50px; background:#000; color:#fff;">
+                    <h1 style="color:#ff0000; font-size:72px;">404</h1>
+                    <p>Страница ${pathname} не найдена</p>
+                    <a href="/" style="color:#ff0000;">Вернуться на главную</a>
+                </body>
+                </html>
+            `;
+            ResponseHelper.sendHTML(res, html, config.STATUS_CODES.NOT_FOUND);
+        }
+    }
+}
+
+module.exports = Router;
+\n\n========== ./config.js ==========\n
+module.exports = {
+    PORT: 3000, //xexexexexe
+    HOST: "localhost", //base
+
+    MIME_TYPES: {
+        //readed and edit to this
+        html: "text/html; charset=utf-8",
+        css: "text/css",
+        js: "application/javascript",
+        json: "application/json; charset=utf-8",
+    },
+
+    STATUS_CODES: {
+        //base
+        OK: 200,
+        CREATED: 201,
+        MOVED_PERMANENTLY: 301, //redirect
+        BAD_REQUEST: 400,
+        NOT_FOUND: 404,
+        INTERNAL_ERROR: 500,
+    },
+};
+\n\n========== ./data/users.json ==========\n
+[]
+\n\n========== ./middleware/errorHandler.js ==========\n
+const ResponseHelper = require("../utils/response");
+const config = require("../config");
+
+module.exports = function errorHandler(err, req, res, next) {
+    console.error(`[ERROR] ${err.message}`);
+    console.error(err.stack);
+
+    const statusCode = err.statusCode || config.STATUS_CODES.INTERNAL_ERROR;
+    const message = err.message || "Внутренняя ошибка сервера";
+
+    ResponseHelper.sendError(res, message, statusCode);
+};
+\n\n========== ./middleware/bodyParser.js ==========\n
+module.exports = function bodyParser(req, res, next) {
+    if (req.method !== "POST" && req.method !== "PUT") {
+        req.body = {};
+        return next();
+    }
+
+    let body = "";
+
+    req.on("data", (chunk) => {
+        body += chunk.toString();
+    });
+
+    req.on("end", () => {
+        const contentType = req.headers["content-type"] || "";
+
+        if (contentType.includes("application/json")) {
+            try {
+                req.body = JSON.parse(body);
+            } catch (err) {
+                req.body = {};
+            }
+        } else if (contentType.includes("application/x-www-form-urlencoded")) {
+            req.body = {};
+            const params = new URLSearchParams(body);
+            for (const [key, value] of params) {
+                req.body[key] = value;
+            }
+        } else {
+            req.body = body;
+        }
+
+        next();
+    });
+
+    req.on("error", () => {
+        req.body = {};
+        next();
+    });
+};
+\n\n========== ./middleware/logger.js ==========\n
+module.exports = function logger(req, res, next) {
+    const start = Date.now();
+    const originalEnd = res.end;
+
+    console.log(`[${new Date().toISOString()}] - ${req.method} ${req.url}`);
+
+    res.end = function (...args) {
+        const duration = Date.now() - start;
+        console.log(
+            `[${new Date().toISOString()}] - ${req.method} ${req.url} - ${res.statusCode} (${duration}ms)`,
+        );
+        originalEnd.apply(res, args);
+    };
+
+    next();
+};
+\n\n========== ./db/sequelize.js ==========\n
+const { Sequelize, DataTypes } = require("sequelize");
+const dbConfig = require("../config/database");
+
+let sequelize;
+
+function connectDB() {
+    sequelize = new Sequelize({
+        dialect: dbConfig.sqlite.dialect,
+        storage: dbConfig.sqlite.storage,
+        logging: false,
+    });
+
+    return sequelize
+        .authenticate()
+        .then(() => console.log("SQLite подключена"))
+        .catch((err) => console.error("Ошибка подключения:", err));
+}
+
+function getSequelize() {
+    return sequelize;
+}
+
+function getDataTypes() {
+    return DataTypes;
+}
+
+module.exports = { connectDB, getSequelize, getDataTypes };
+\n\n========== ./db/mongoose.js ==========\n
+const mongoose = require("mongoose");
+const dbConfig = require("../config/database");
+
+async function connectDB() {
+    try {
+        await mongoose.connect(dbConfig.mongodb.uri);
+        console.log("MongoDB подключена (Mongoose)");
+    } catch (err) {
+        console.error("Ошибка подключения MongoDB:", err.message);
+        process.exit(1);
+    }
+}
+
+function getMongoose() {
+    return mongoose;
+}
+
+module.exports = { connectDB, getMongoose };
+\n\n========== ./templates/pages/home.html ==========\n
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{title}} | Node.js HTTP Server</title>
+        <link rel="stylesheet" href="../../css/style.css" />
+    </head>
+    <body>
+        <nav class="navbar">
+            <div class="container">
+                <div class="nav-brand">
+                    <a href="/">NodeJS Server</a>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="/" class="active">Главная</a></li>
+                    <li><a href="/about">О нас</a></li>
+                    <li><a href="/contact">Контакты</a></li>
+                    <li><a href="/login">Вход</a></li>
+                    <li><a href="/api/users">Пользователи</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="main">
+            <div class="container">
+                <div class="hero">
+                    <h1>{{title}}</h1>
+                    <p class="lead">{{content}}</p>
+                    <a href="/about" class="btn btn-primary">Узнать больше</a>
+                </div>
+
+                <div class="features">
+                    <div class="feature-card">
+                        <div class="feature-icon"></div>
+                        <h3>Высокая производительность</h3>
+                        <p>Сервер на чистом Node.js без внешних зависимостей</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon"></div>
+                        <h3>Профессиональная архитектура</h3>
+                        <p>MVC паттерн, middleware, роутинг</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon"></div>
+                        <h3>REST API</h3>
+                        <p>Полноценное API с поддержкой JSON</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon"></div>
+                        <h3>Безопасность</h3>
+                        <p>Валидация данных и обработка ошибок</p>
+                    </div>
+                </div>
+
+                <div class="tech-stack">
+                    <h2>Технологии</h2>
+                    <div class="tech-badges">
+                        <span class="badge">Node.js</span>
+                        <span class="badge">HTTP модуль</span>
+                        <span class="badge">REST API</span>
+                        <span class="badge">Middleware</span>
+                        <span class="badge">Шаблонизация</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="container">
+                <p>&copy; 2026 Node.js HTTP Server. Все права защищены.</p>
+                <p>Демонстрационный проект для стажировки</p>
+            </div>
+        </footer>
+    </body>
+</html>
+\n\n========== ./templates/pages/contact.html ==========\n
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{title}} | Node.js HTTP Server</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <nav class="navbar">
+            <div class="container">
+                <div class="nav-brand">
+                    <a href="/">NodeJS Server</a>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="/">Главная</a></li>
+                    <li><a href="/about">О нас</a></li>
+                    <li><a href="/contact" class="active">Контакты</a></li>
+                    <li><a href="/login">Вход</a></li>
+                    <li><a href="/api/users">Пользователи</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="main">
+            <div class="container">
+                <div class="page-header">
+                    <h1>{{title}}</h1>
+                    <p>Свяжитесь с нами любым удобным способом</p>
+                </div>
+
+                <div class="contact-grid">
+                    <div class="contact-info">
+                        <div class="info-card">
+                            <div class="info-icon"></div>
+                            <h3>Адрес</h3>
+                            <p>HELL</p>
+                        </div>
+
+                        <div class="info-card">
+                            <div class="info-icon"></div>
+                            <h3>Email</h3>
+                            <p><a href="mailto:{{email}}">{{email}}</a></p>
+                            <p>
+                                <a href="mailto:support@example.com"
+                                    >support@example.com</a
+                                >
+                            </p>
+                        </div>
+
+                        <div class="info-card">
+                            <div class="info-icon"></div>
+                            <h3>Телефон</h3>
+                            <p>{{phone}}</p>
+                            <p>0101 1010 0000 1111</p>
+                        </div>
+
+                        <div class="info-card">
+                            <div class="info-icon"></div>
+                            <h3>Часы работы</h3>
+                            <p>Пн-Пт: 9:00 - 18:00</p>
+                            <p>Сб-Вс: Выходной</p>
+                        </div>
+                    </div>
+
+                    <div class="contact-form">
+                        <h3>Напишите нам</h3>
+                        <form id="feedbackForm">
+                            <div class="form-group">
+                                <label for="name">Ваше имя</label>
+                                <input
+                                    type="text"
+                                    id="name"
+                                    name="name"
+                                    required
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    required
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label for="message">Сообщение</label>
+                                <textarea
+                                    id="message"
+                                    name="message"
+                                    rows="5"
+                                    required
+                                ></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                Отправить
+                            </button>
+                        </form>
+                        <div id="formMessage" class="form-message"></div>
+                    </div>
+                </div>
+
+                <div class="map">
+                    <h3>Мы на карте</h3>
+                    <div class="map-placeholder">
+                        <p>Kарта здесь</p>
+                        <small>HELL</small>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="container">
+                <p>&copy; 2026 Node.js HTTP Server. Все права защищены.</p>
+            </div>
+        </footer>
+
+        <script>
+            document
+                .getElementById("feedbackForm")
+                .addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const formData = {
+                        name: document.getElementById("name").value,
+                        email: document.getElementById("email").value,
+                        message: document.getElementById("message").value,
+                    };
+
+                    const messageDiv = document.getElementById("formMessage");
+                    messageDiv.innerHTML =
+                        '<p class="success">Спасибо! Ваше сообщение отправлено.</p>';
+                    this.reset();
+
+                    setTimeout(() => {
+                        messageDiv.innerHTML = "";
+                    }, 3000);
+                });
+        </script>
+    </body>
+</html>
+\n\n========== ./templates/pages/about.html ==========\n
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{title}} | Node.js HTTP Server</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <nav class="navbar">
+            <div class="container">
+                <div class="nav-brand">
+                    <a href="/">NodeJS Server</a>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="/">Главная</a></li>
+                    <li><a href="/about" class="active">О нас</a></li>
+                    <li><a href="/contact">Контакты</a></li>
+                    <li><a href="/login">Вход</a></li>
+                    <li><a href="/api/users">Пользователи</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="main">
+            <div class="container">
+                <div class="page-header">
+                    <h1>{{title}}</h1>
+                    <p>Узнайте больше о нашей компании</p>
+                </div>
+
+                <div class="about-content">
+                    <div class="company-info">
+                        <h2>{{companyName}}</h2>
+                        <p>
+                            Мы - команда энтузиастов, создающих качественные
+                            веб-решения на чистом Node.js. Наш подход
+                            заключается в глубоком понимании технологий и отказе
+                            от излишних зависимостей.
+                        </p>
+
+                        <h3>Наши достижения:</h3>
+                        <ul class="achievements">
+                            <li>
+                                {{experience}} успешной работы в веб-разработке
+                            </li>
+                            <li>{{projects}} реализованных проектов</li>
+                            <li>100% довольных клиентов</li>
+                            <li>24/7 техническая поддержка</li>
+                        </ul>
+                    </div>
+
+                    <div class="team-section">
+                        <h3>Наша команда</h3>
+                        <div class="team-grid">
+                            <div class="team-member">
+                                <div class="member-avatar"></div>
+                                <h4>EM17R3SS</h4>
+                                <p>Lead Developer</p>
+                            </div>
+                            <div class="team-member">
+                                <div class="member-avatar"></div>
+                                <h4>EM17R3SS</h4>
+                                <p>Backend Developer</p>
+                            </div>
+                            <div class="team-member">
+                                <div class="member-avatar"></div>
+                                <h4>EM17R3SS</h4>
+                                <p>Frontend Developer</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="container">
+                <p>&copy; 2026 Node.js HTTP Server. Все права защищены.</p>
+            </div>
+        </footer>
+    </body>
+</html>
+\n\n========== ./templates/pages/login.html ==========\n
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{title}} | Node.js HTTP Server</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <nav class="navbar">
+            <div class="container">
+                <div class="nav-brand">
+                    <a href="/">NodeJS Server</a>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="/">Главная</a></li>
+                    <li><a href="/about">О нас</a></li>
+                    <li><a href="/contact">Контакты</a></li>
+                    <li><a href="/login" class="active">Вход</a></li>
+                    <li><a href="/api/users">Пользователи</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="main">
+            <div class="container">
+                <div class="login-wrapper">
+                    <div class="login-container">
+                        <div class="login-header">
+                            <h2>Вход в систему</h2>
+                            <p>Введите свои данные для входа</p>
+                        </div>
+
+                        <form method="POST" action="/login" class="login-form">
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    placeholder="example@mail.com"
+                                    required
+                                />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="password">Пароль</label>
+                                <input
+                                    type="password"
+                                    id="password"
+                                    name="password"
+                                    placeholder="-----------"
+                                    required
+                                />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="checkbox">
+                                    <input type="checkbox" name="remember" />
+                                    Запомнить меня
+                                </label>
+                            </div>
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary btn-block"
+                            >
+                                Войти
+                            </button>
+                        </form>
+
+                        <div class="login-info">
+                            <div class="info-box">
+                                <h4>Тестовые данные:</h4>
+                                <p>
+                                    <strong>Email:</strong> любой
+                                    зарегистрированный email
+                                </p>
+                                <p><strong>Пароль:</strong> password123</p>
+                                <hr />
+                                <p>
+                                    <small
+                                        >Сначала добавьте пользователя через
+                                        <a href="/api/users"
+                                            >список пользователей</a
+                                        ></small
+                                    >
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="login-footer">
+                            <a href="/">Вернуться на главную</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="container">
+                <p>&copy; 2026 Node.js HTTP Server. Все права защищены.</p>
+            </div>
+        </footer>
+    </body>
+</html>
+\n\n========== ./templates/users/userList.html ==========\n
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Управление пользователями | Node.js HTTP Server</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <nav class="navbar">
+            <div class="container">
+                <div class="nav-brand">
+                    <a href="/">NodeJS Server</a>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="/">Главная</a></li>
+                    <li><a href="/about">О нас</a></li>
+                    <li><a href="/contact">Контакты</a></li>
+                    <li><a href="/login">Вход</a></li>
+                    <li>
+                        <a href="/api/users" class="active">Пользователи</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="main">
+            <div class="container">
+                <div class="page-header">
+                    <h1>Управление пользователями</h1>
+                    <p>
+                        Всего пользователей:
+                        <span id="userCount">{{userCount}}</span>
+                    </p>
+                    <div class="header-actions">
+                        <a
+                            href="/api/users?format=json"
+                            class="btn btn-secondary"
+                            target="_blank"
+                            >Получить JSON</a
+                        >
+                        <button
+                            onclick="refreshUsers()"
+                            class="btn btn-secondary"
+                        >
+                            Обновить
+                        </button>
+                    </div>
+                </div>
+
+                <div class="users-section">
+                    <div class="add-user-form">
+                        <h3>Добавить нового пользователя</h3>
+                        <form id="addUserForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="userName">Имя</label>
+                                    <input
+                                        type="text"
+                                        id="userName"
+                                        placeholder="Иван Петров"
+                                        required
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label for="userEmail">Email</label>
+                                    <input
+                                        type="email"
+                                        id="userEmail"
+                                        placeholder="ivan@example.com"
+                                        required
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <button
+                                        type="submit"
+                                        class="btn btn-primary"
+                                    >
+                                        Добавить пользователя
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                        <div id="addUserMessage" class="form-message"></div>
+                    </div>
+
+                    <div class="users-table-container">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Имя</th>
+                                    <th>Email</th>
+                                    <th>Дата регистрации</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="container">
+                <p>&copy; 2026 Node.js HTTP Server. Все права защищены.</p>
+            </div>
+        </footer>
+
+        <script src="/js/main.js"></script>
+    </body>
+</html>
+\n\n========== ./templates/partials/footer.html ==========\n
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 Node.js HTTP Server. Все права защищены.</p>
+            <p>Разработано с Высокомерием на чистом Node.js</p>
+        </div>
+    </footer>
+</body>
+</html>
+\n\n========== ./templates/partials/header.html ==========\n
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{title}} | Node.js HTTP Server</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <nav class="navbar">
+            <div class="container">
+                <div class="nav-brand">
+                    <a href="/">NodeJS Server</a>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="/" class="{{activeHome}}">Главная</a></li>
+                    <li><a href="/about" class="{{activeAbout}}">О нас</a></li>
+                    <li>
+                        <a href="/contact" class="{{activeContact}}"
+                            >Контакты</a
+                        >
+                    </li>
+                    <li><a href="/login" class="{{activeLogin}}">Вход</a></li>
+                    <li>
+                        <a href="/api/users" class="{{activeUsers}}"
+                            >Пользователи</a
+                        >
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </body>
+</html>
+\n\n========== ./controllers/pageController.js ==========\n
+const path = require("path");
+const TemplateEngine = require("../utils/templateEngine");
+const ResponseHelper = require("../utils/response");
+
+const templateEngine = new TemplateEngine(
+    path.join(__dirname, "../templates/pages"),
+);
+
+class PageController {
+    static async getHome(req, res) {
+        const html = await templateEngine.render("home.html", {
+            title: "Главная страница",
+            content: "Добро пожаловать на наш сайт",
+        });
+        ResponseHelper.sendHTML(res, html);
+    }
+
+    static async getAbout(req, res) {
+        const html = await templateEngine.render("about.html", {
+            title: "О нас",
+            companyName: "",
+            experience: "",
+            projects: "",
+        });
+        ResponseHelper.sendHTML(res, html);
+    }
+
+    static async getContact(req, res) {
+        const html = await templateEngine.render("contact.html", {
+            title: "Контакты",
+            email: "info@example.com",
+            phone: "+7",
+        });
+        ResponseHelper.sendHTML(res, html);
+    }
+
+    static async getLogin(req, res) {
+        const html = await templateEngine.render("login.html", {
+            title: "Вход в систему",
+        });
+        ResponseHelper.sendHTML(res, html);
+    }
+
+    static postLogin(req, res) {
+        const { email, password } = req.body;
+        const userService = require("../services/userService");
+
+        const result = userService.validateLogin(email, password);
+
+        if (result.success) {
+            const html = `
+                <!DOCTYPE html>
+                <html>
+                <head><meta charset="UTF-8"><title>Приветствие</title></head>
+                <body style="text-align:center; padding:50px; background:#000; color:#fff;">
+                    <h1 style="color:#ff0000;">Добро пожаловать, ${result.name}!</h1>
+                    <p>Вы успешно вошли в систему.</p>
+                    <a href="/" style="color:#ff0000;">На главную</a>
+                </body>
+                </html>
+            `;
+            ResponseHelper.sendHTML(res, html);
+        } else {
+            const html = `
+                <!DOCTYPE html>
+                <html>
+                <head><meta charset="UTF-8"><title>Ошибка входа</title></head>
+                <body style="text-align:center; padding:50px; background:#000; color:#fff;">
+                    <h1 style="color:#ff0000;">Ошибка</h1>
+                    <p>${result.message}</p>
+                    <a href="/login" style="color:#ff0000;">Попробовать снова</a>
+                </body>
+                </html>
+            `;
+            ResponseHelper.sendHTML(res, html, 400);
+        }
+    }
+}
+
+module.exports = PageController;
+\n\n========== ./controllers/userController.js ==========\n
+const path = require("path");
+const ResponseHelper = require("../utils/response");
+const userService = require("../services/userService");
+const TemplateEngine = require("../utils/templateEngine");
+
+const templateEngine = new TemplateEngine(
+    path.join(__dirname, "../templates/users"),
+);
+
+class UserController {
+    static async getUsers(req, res) {
+        const users = await userService.getUsers();
+
+        const url = new URL(req.url, `http://${req.headers.host}`);
+        const format = url.searchParams.get("format");
+
+        if (format === "json") {
+            ResponseHelper.sendJSON(res, { users, count: users.length });
+        } else {
+            const html = await templateEngine.render("userList.html", {
+                users: JSON.stringify(users),
+                userCount: users.length,
+            });
+            ResponseHelper.sendHTML(res, html);
+        }
+    }
+
+    static async getUserById(req, res) {
+        const { id } = req.params;
+        const users = await userService.getUsers();
+        const user = users.find((u) => u.id == id);
+
+        if (!user) {
+            ResponseHelper.sendJSON(
+                res,
+                { error: "Пользователь не найден" },
+                404,
+            );
+            return;
+        }
+
+        ResponseHelper.sendJSON(res, { user });
+    }
+
+    static async postUsers(req, res) {
+        try {
+            const newUser = await userService.addUser(req.body);
+            ResponseHelper.sendJSON(
+                res,
+                {
+                    success: true,
+                    user: newUser,
+                    message: "Пользователь успешно добавлен",
+                },
+                201,
+            );
+        } catch (error) {
+            ResponseHelper.sendJSON(
+                res,
+                {
+                    success: false,
+                    error: error.message,
+                },
+                400,
+            );
+        }
+    }
+
+    static async deleteUser(req, res) {
+        const { id } = req.params;
+        const deleted = await userService.deleteUser(id);
+
+        if (!deleted) {
+            ResponseHelper.sendJSON(
+                res,
+                { error: "Пользователь не найден" },
+                404,
+            );
+            return;
+        }
+
+        ResponseHelper.sendJSON(res, {
+            success: true,
+            message: "Пользователь удалён",
+        });
+    }
+}
+
+module.exports = UserController;
+\n\n========== ./server.js ==========\n
+const http = require("http");
+const url = require("url");
+const path = require("path");
+const fs = require("fs");
+const config = require("./config");
+const Router = require("./router");
+const logger = require("./middleware/logger");
+const bodyParser = require("./middleware/bodyParser");
+const errorHandler = require("./middleware/errorHandler");
+const ResponseHelper = require("./utils/response");
+const serveStatic = require("./utils/static");
+const dotenv = require("dotenv");
+const dbConfig = require("./config/database");
+
+dotenv.config();
+
+class Server {
+    constructor() {
+        this.router = new Router();
+        this.server = http.createServer(this.requestHandler.bind(this));
+    }
+
+    async requestHandler(req, res) {
+        if (await serveStatic(req, res)) {
+            return;
+        }
+
+        logger(req, res, () => {
+            bodyParser(req, res, () => {
+                try {
+                    this.router.handle(req, res);
+                } catch (err) {
+                    errorHandler(err, req, res, () => {});
+                }
+            });
+        });
+    }
+
+    async start() {
+        //db connect
+        if (dbConfig.orm === "mongoose") {
+            const { connectDB } = require("./db/mongoose");
+            await connectDB();
+        } else {
+            const { connectDB } = require("./db/sequelize");
+            await connectDB();
+        }
+
+        //model init
+        const userModel = require("./models_new");
+        await userModel.init();
+
+        //start
+        this.server.listen(config.PORT, config.HOST, () => {
+            console.log(`http://${config.HOST}:${config.PORT}`);
+            console.log("\nAvailable routes:\n");
+            console.log("Pages:");
+            console.log("     GET  /            - Home page");
+            console.log("     GET  /about       - About page");
+            console.log("     GET  /contact     - Contact page");
+            console.log("     GET  /login       - Login form");
+            console.log("     POST /login       - Process login");
+            console.log("\nAPI:");
+            console.log("     GET  /api/users   - User list");
+            console.log("     POST /api/users   - Add user");
+            console.log("\nRedirect:");
+            console.log("     GET  /old-page    - 301 → /new-page");
+            console.log("\nStatic:");
+            console.log("     /css/style.css    - Cyberpunk styles");
+            console.log("     /js/main.js       - Client JS");
+            console.log("\nReady for requests\n");
+        });
+    }
+}
+
+const server = new Server();
+server.start();
+\n\n========== ./models/userModel.js ==========\n
+const fs = require("fs").promises;
+const path = require("path");
+
+const USERS_FILE = path.join(__dirname, "../data/users.json");
+
+class UserModel {
+    constructor() {
+        this.users = [];
+        this.init();
+    }
+
+    async init() {
+        await this.loadUsers();
+    }
+
+    async loadUsers() {
+        try {
+            const data = await fs.readFile(USERS_FILE, "utf8");
+            this.users = JSON.parse(data);
+        } catch (err) {
+            if (err.code === "ENOENT") {
+                this.users = [];
+            } else {
+                console.error("Ошибка загрузки users.json:", err.message);
+                this.users = [];
+            }
+        }
+    }
+
+    async saveUsers() {
+        try {
+            await fs.writeFile(USERS_FILE, JSON.stringify(this.users, null, 2));
+            return true;
+        } catch (err) {
+            console.error("Ошибка сохранения users.json:", err.message);
+            return false;
+        }
+    }
+
+    getAll() {
+        return this.users;
+    }
+
+    async add(user) {
+        const newUser = {
+            id: Date.now(),
+            name: user.name,
+            email: user.email,
+            createdAt: new Date().toISOString(),
+        };
+        this.users.push(newUser);
+        await this.saveUsers();
+        return newUser;
+    }
+
+    async delete(id) {
+        const index = this.users.findIndex((u) => u.id == id);
+        if (index === -1) return false;
+
+        this.users.splice(index, 1);
+        await this.saveUsers();
+        return true;
+    }
+
+    findByEmail(email) {
+        return this.users.find((user) => user.email === email);
+    }
+}
+
+module.exports = new UserModel();
+\n\n========== ./utils/templateEngine.js ==========\n
+const fs = require("fs").promises;
+const path = require("path");
+
+class TemplateEngine {
+    constructor(templateDir) {
+        this.templateDir = templateDir;
+        this.cache = {};
+    }
+
+    async loadTemplate(name) {
+        if (this.cache[name]) {
+            return this.cache[name];
+        }
+
+        const filePath = path.join(this.templateDir, name);
+
+        try {
+            const content = await fs.readFile(filePath, "utf8");
+            this.cache[name] = content;
+            return content;
+        } catch (err) {
+            console.error("Ошибка загрузки шаблона " + name + ":", err.message);
+            return null;
+        }
+    }
+
+    async render(templateName, data = {}) {
+        let template = await this.loadTemplate(templateName);
+
+        if (template === null) {
+            return "<h1>Шаблон не найден</h1>";
+        }
+
+        for (let key in data) {
+            const regex = new RegExp("{{" + key + "}}", "g");
+            template = template.replace(regex, data[key]);
+        }
+        return template;
+    }
+}
+
+module.exports = TemplateEngine;
+\n\n========== ./utils/response.js ==========\n
+const config = require("../config");
+
+class ResponseHelper {
+    static sendJSON(res, data, statusCode = config.STATUS_CODES.OK) {
+        res.writeHead(statusCode, { "Content-Type": config.MIME_TYPES.json });
+        res.end(JSON.stringify(data));
+    } //send data is status ok
+
+    static sendHTML(res, html, statusCode = config.STATUS_CODES.OK) {
+        res.writeHead(statusCode, { "Content-Type": config.MIME_TYPES.html });
+        res.end(html);
+    } //send html if status ok
+
+    static redirect(res, location, permanent = false) {
+        let statusCode;
+        if (permanent === false) {
+            statusCode = 302;
+        } else {
+            statusCode = 301;
+        }
+        res.writeHead(statusCode, {
+            Location: location,
+        });
+        res.end();
+    } //redirect to 301 const and 302 time
+
+    static sendError(
+        res,
+        message,
+        statusCode = config.STATUS_CODES.INTERNAL_ERROR,
+    ) {
+        const html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Ошибка ${statusCode}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #000; color: #fff; }
+                        h1 { font-size: 72px; color: #ff0000; }
+                        a { color: #ff0000; text-decoration: none; }
+                    </style>
+                </head>
+                <body>
+                    <h1>${statusCode}</h1>
+                    <p>${message}</p>
+                    <a href="/">Вернуться на главную</a>
+                </body>
+                </html>
+            `;
+
+        this.sendHTML(res, html, statusCode);
+    }
+}
+
+module.exports = ResponseHelper;
+\n\n========== ./utils/static.js ==========\n
+const fs = require("fs").promises;
+const path = require("path");
+const config = require("../config");
+
+async function serveStatic(req, res) {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const pathname = url.pathname;
+
+    if (!pathname.startsWith("/css/") && !pathname.startsWith("/js/")) {
+        return false;
+    }
+
+    const filePath = path.join(__dirname, "../public", pathname);
+    const ext = path.extname(filePath).slice(1);
+    const contentType = config.MIME_TYPES[ext] || "text/plain";
+
+    try {
+        const content = await fs.readFile(filePath);
+        res.writeHead(200, { "Content-Type": contentType });
+        res.end(content);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+module.exports = serveStatic;
+\n\n========== ./utils/routeParser.js ==========\n
+function parseRoutePath(path) {
+    const paramNames = [];
+    const regexPattern = path.replace(/:([^/]+)/g, (_, paramName) => {
+        paramNames.push(paramName);
+        return "([^/]+)";
+    });
+    const regex = new RegExp(`^${regexPattern}$`);
+    return { regex, paramNames };
+}
+
+module.exports = parseRoutePath;
+\n\n========== ./.env ==========\n
+//DB_ORM=mongoose
+DB_ORM=sequelize
+
+MONGO_URI=mongodb://localhost:27017/myapp
+
+SQLITE_STORAGE=./data/database.sqlite
+\n\n========== ./public/js/main.js ==========\n
+async function addUser() {
+    const name = document.getElementById("userName")?.value;
+    const email = document.getElementById("userEmail")?.value;
+
+    if (!name || !email) {
+        showMessage("Заполните все поля", "error");
+        return;
+    }
+
+    try {
+        const response = await fetch("/api/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showMessage("Пользователь добавлен!", "success");
+            refreshUsers();
+            document.getElementById("userName").value = "";
+            document.getElementById("userEmail").value = "";
+        } else {
+            showMessage(result.error, "error");
+        }
+    } catch (err) {
+        showMessage("Ошибка соединения", "error");
+    }
+}
+
+async function deleteUser(id) {
+    if (!confirm("Удалить пользователя?")) return;
+
+    try {
+        const response = await fetch(`/api/users/${id}`, { method: "DELETE" });
+        const result = await response.json();
+
+        if (result.success) {
+            showMessage("Пользователь удалён", "success");
+            refreshUsers();
+        } else {
+            showMessage(result.error, "error");
+        }
+    } catch (err) {
+        showMessage("Ошибка при удалении", "error");
+    }
+}
+
+async function refreshUsers() {
+    try {
+        const response = await fetch("/api/users?format=json");
+        const data = await response.json();
+
+        if (data.users) {
+            renderUsers(data.users);
+            const countSpan = document.getElementById("userCount");
+            if (countSpan) countSpan.textContent = data.users.length;
+        }
+    } catch (err) {
+        console.error("Ошибка обновления:", err);
+        showMessage("Ошибка при обновлении", "error");
+    }
+}
+
+function renderUsers(users) {
+    const tbody = document.getElementById("usersBody");
+    if (!tbody) return;
+
+    if (!users || users.length === 0) {
+        tbody.innerHTML =
+            '<tr><td colspan="5" style="text-align:center;">Нет пользователей</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = users
+        .map(
+            (user) => `
+        <tr>
+            <td>${user.id}</td>
+            <td>${escapeHtml(user.name)}</td>
+            <td>${escapeHtml(user.email)}</td>
+            <td>${user.createdAt ? new Date(user.createdAt).toLocaleString("ru-RU") : "—"}</td>
+            <td><button class="btn-delete" onclick="deleteUser(${user.id})">Удалить</button></td>
+        </tr>
+    `,
+        )
+        .join("");
+}
+
+function showMessage(message, type) {
+    const messageDiv = document.getElementById("addUserMessage");
+    if (!messageDiv) return;
+
+    messageDiv.textContent = message;
+    messageDiv.className = `form-message ${type}`;
+
+    setTimeout(() => {
+        messageDiv.textContent = "";
+        messageDiv.className = "form-message";
+    }, 3000);
+}
+
+function escapeHtml(str) {
+    if (!str) return "";
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function initContactForm() {
+    const form = document.getElementById("feedbackForm");
+    if (!form) return;
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const messageDiv = document.getElementById("formMessage");
+        showMessage("Спасибо! Сообщение отправлено.", "success");
+        form.reset();
+        setTimeout(() => {
+            if (messageDiv) messageDiv.innerHTML = "";
+        }, 3000);
+    });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    initContactForm();
+    const addUserForm = document.getElementById("addUserForm");
+    if (addUserForm) {
+        addUserForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            await addUser();
+        });
+    }
+});
+\n\n========== ./public/css/style.css ==========\n
+/*
+
+        МЕНЯ ТОРКНУЛО ИСП ИИ ДЛЯ ГЕНЕРАЦИИ ПРОСТО ПРИКОЛЬНОГО ДИЗАЙНА ИЗВИНЯЮСЬ
+
+*/
+/* Цвета: Чёрный #000000, Красный #ff0000, Белый #ffffff */
+
+@import url("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap");
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #000000;
+    color: #ffffff;
+    font-family: "Share Tech Mono", "Courier New", monospace;
+    line-height: 1.6;
+    position: relative;
+}
+
+/* Глитч-эффект на заднем фоне */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(255, 0, 0, 0.03) 0px,
+        rgba(255, 0, 0, 0.03) 2px,
+        transparent 2px,
+        transparent 6px
+    );
+    pointer-events: none;
+    z-index: 999;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* ========== НАВИГАЦИЯ ========== */
+.navbar {
+    background: #000000;
+    border-bottom: 2px solid #ff0000;
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+}
+
+.navbar .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.nav-brand a {
+    color: #ff0000;
+    text-decoration: none;
+    font-size: 1.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow: 0 0 10px #ff0000;
+    transition: all 0.3s;
+}
+
+.nav-brand a:hover {
+    text-shadow: 0 0 20px #ff0000;
+    letter-spacing: 5px;
+}
+
+.nav-menu {
+    display: flex;
+    list-style: none;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.nav-menu a {
+    color: #ffffff;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border: 1px solid #ff0000;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+}
+
+.nav-menu a:hover,
+.nav-menu a.active {
+    background: #ff0000;
+    color: #000000;
+    box-shadow: 0 0 15px #ff0000;
+    text-shadow: none;
+}
+
+/* ========== ГЛАВНЫЙ ЭКРАН (HERO) ========== */
+.hero {
+    text-align: center;
+    padding: 4rem 2rem;
+    border: 2px solid #ff0000;
+    margin: 2rem 0;
+    background: linear-gradient(135deg, #0a0a0a 0%, #000000 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: ">";
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: #ff0000;
+    font-size: 2rem;
+    opacity: 0.5;
+}
+
+.hero::after {
+    content: "<";
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    color: #ff0000;
+    font-size: 2rem;
+    opacity: 0.5;
+}
+
+.hero h1 {
+    font-size: 3rem;
+    color: #ff0000;
+    text-shadow: 0 0 15px #ff0000;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 5px;
+}
+
+.lead {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    color: #cccccc;
+}
+
+/* ========== КНОПКИ ========== */
+.btn {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-family: "Share Tech Mono", monospace;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: #ff0000;
+    color: #000000;
+    border: 1px solid #ff0000;
+}
+
+.btn-primary:hover {
+    background: #000000;
+    color: #ff0000;
+    box-shadow: 0 0 20px #ff0000;
+    transform: scale(1.05);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: #ffffff;
+    border: 1px solid #ff0000;
+}
+
+.btn-secondary:hover {
+    background: #ff0000;
+    color: #000000;
+    box-shadow: 0 0 15px #ff0000;
+}
+
+.btn-block {
+    display: block;
+    width: 100%;
+}
+
+/* ========== КАРТОЧКИ (FEATURES) ========== */
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin: 3rem 0;
+}
+
+.feature-card {
+    background: #0a0a0a;
+    border: 1px solid #ff0000;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.3);
+    border-width: 2px;
+}
+
+.feature-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 0 5px #ff0000);
+}
+
+.feature-card h3 {
+    color: #ff0000;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+}
+
+/* ========== ТЕХНОЛОГИИ ========== */
+.tech-stack {
+    background: #0a0a0a;
+    border: 1px solid #ff0000;
+    padding: 2rem;
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.tech-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.badge {
+    background: transparent;
+    border: 1px solid #ff0000;
+    color: #ff0000;
+    padding: 0.5rem 1rem;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    transition: all 0.3s;
+}
+
+.badge:hover {
+    background: #ff0000;
+    color: #000000;
+    box-shadow: 0 0 10px #ff0000;
+}
+
+/* ========== ЗАГОЛОВКИ СТРАНИЦ ========== */
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    border-bottom: 1px solid #ff0000;
+    padding-bottom: 1rem;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    color: #ff0000;
+    text-shadow: 0 0 10px #ff0000;
+    text-transform: uppercase;
+}
+
+/* ========== ФОРМЫ ========== */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #ff0000;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    background: #111111;
+    border: 1px solid #ff0000;
+    color: #ffffff;
+    font-family: "Share Tech Mono", monospace;
+    font-size: 1rem;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    box-shadow: 0 0 10px #ff0000;
+    background: #000000;
+}
+
+/* ========== ТАБЛИЦА ПОЛЬЗОВАТЕЛЕЙ ========== */
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.users-table th,
+.users-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #ff0000;
+}
+
+.users-table th {
+    color: #ff0000;
+    text-transform: uppercase;
+    font-weight: normal;
+    letter-spacing: 2px;
+}
+
+.users-table tr:hover {
+    background: rgba(255, 0, 0, 0.1);
+}
+
+.btn-delete {
+    background: transparent;
+    border: 1px solid #ff0000;
+    color: #ff0000;
+    padding: 0.25rem 0.75rem;
+    cursor: pointer;
+    font-family: "Share Tech Mono", monospace;
+    transition: all 0.3s;
+}
+
+.btn-delete:hover {
+    background: #ff0000;
+    color: #000000;
+    box-shadow: 0 0 10px #ff0000;
+}
+
+/* ========== КОНТАКТНАЯ ИНФОРМАЦИЯ ========== */
+.info-card {
+    background: #0a0a0a;
+    border: 1px solid #ff0000;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.info-card:hover {
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+}
+
+.info-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+/* ========== ЛОГИН БОКС ========== */
+.login-container {
+    background: #0a0a0a;
+    border: 2px solid #ff0000;
+    padding: 2rem;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.2);
+}
+
+.login-header h2 {
+    color: #ff0000;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+/* ========== ФУТЕР ========== */
+.footer {
+    background: #000000;
+    border-top: 1px solid #ff0000;
+    text-align: center;
+    padding: 2rem 0;
+    margin-top: 3rem;
+    color: #666666;
+}
+
+/* ========== АНИМАЦИИ ========== */
+@keyframes glitch {
+    0% {
+        text-shadow:
+            -2px 0 #ff0000,
+            2px 0 #ffffff;
+    }
+    50% {
+        text-shadow:
+            2px 0 #ff0000,
+            -2px 0 #ffffff;
+    }
+    100% {
+        text-shadow:
+            -2px 0 #ff0000,
+            2px 0 #ffffff;
+    }
+}
+
+.hero h1:hover {
+    animation: glitch 0.3s infinite;
+}
+
+/* ========== АДАПТИВНОСТЬ ========== */
+@media (max-width: 768px) {
+    .navbar .container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .nav-menu {
+        justify-content: center;
+    }
+
+    .hero h1 {
+        font-size: 2rem;
+    }
+
+    .features {
+        grid-template-columns: 1fr;
+    }
+}
+\n\n========== ./routes/apiRoutes.js ==========\n
+const UserController = require("../controllers/userController");
+
+module.exports = [
+    { method: "GET", path: "/api/users", handler: UserController.getUsers },
+    { method: "POST", path: "/api/users", handler: UserController.postUsers },
+    {
+        method: "GET",
+        path: "/api/users/:id",
+        handler: UserController.getUserById,
+    },
+    {
+        method: "DELETE",
+        path: "/api/users/:id",
+        handler: UserController.deleteUser,
+    },
+];
+\n\n========== ./routes/pageRoutes.js ==========\n
+const PageController = require("../controllers/pageController");
+
+module.exports = [
+    { method: "GET", path: "/", handler: PageController.getHome },
+    { method: "GET", path: "/home", handler: PageController.getHome },
+    { method: "GET", path: "/about", handler: PageController.getAbout },
+    { method: "GET", path: "/contact", handler: PageController.getContact },
+    { method: "GET", path: "/login", handler: PageController.getLogin },
+    { method: "POST", path: "/login", handler: PageController.postLogin },
+    {
+        method: "GET",
+        path: "/old-page",
+        handler: (req, res) => {
+            const ResponseHelper = require("../../utils/response");
+            ResponseHelper.redirect(res, "/new-page", true);
+        },
+    },
+    {
+        method: "GET",
+        path: "/new-page",
+        handler: (req, res) => {
+            const ResponseHelper = require("../../utils/response");
+            ResponseHelper.sendHTML(
+                res,
+                '<h1>Новая страница</h1><p>Редирект с /old-page</p><a href="/">На главную</a>',
+            );
+        },
+    },
+];
+\n\n========== ./services/userService.js ==========\n
+const userModel = require("../models_new");
+
+class UserService {
+    async getUsers() {
+        return userModel.getAll();
+    }
+
+    async addUser(userData) {
+        if (!userData.name || !userData.email) {
+            throw new Error("Имя и Email обязательны");
+        }
+
+        const existing = userModel.findByEmail(userData.email);
+        if (existing) {
+            throw new Error("Пользователь с таким Email уже существует");
+        }
+
+        return await userModel.add(userData);
+    }
+
+    async deleteUser(id) {
+        return await userModel.delete(id);
+    }
+
+    validateLogin(email, password) {
+        const user = userModel.findByEmail(email);
+        if (user && password === "password123") {
+            return { success: true, name: user.name };
+        }
+        return { success: false, message: "Неверный Email или Пароль" };
+    }
+}
+
+module.exports = new UserService();
+\n\n========== ./models_new/UserSequelize.js ==========\n
+const { getSequelize, getDataTypes } = require("../db/sequelize");
+
+const UserModel = () => {
+    const sequelize = getSequelize();
+    const DataTypes = getDataTypes();
+
+    const User = sequelize.define(
+        "User",
+        {
+            id: {
+                type: DataTypes.INTEGER,
+                primaryKey: true,
+                autoIncrement: true,
+            },
+            name: {
+                type: DataTypes.STRING,
+                allowNull: false,
+            },
+            email: {
+                type: DataTypes.STRING,
+                allowNull: false,
+                unique: true,
+            },
+            createdAt: {
+                type: DataTypes.DATE,
+                defaultValue: DataTypes.NOW,
+            },
+        },
+        {
+            tableName: "users",
+            timestamps: false,
+        },
+    );
+
+    return User;
+};
+
+module.exports = UserModel;
+\n\n========== ./models_new/UserMongoose.js ==========\n
+const mongoose = require("mongoose");
+
+const userSchema = new mongoose.Schema(
+    {
+        name: { type: String, required: true },
+        email: { type: String, required: true, unique: true },
+        createdAt: { type: Date, default: Date.now },
+    },
+    {
+        collection: "users",
+    },
+);
+
+const User = mongoose.model("User", userSchema);
+
+module.exports = User;
+\n\n========== ./models_new/index.js ==========\n
+const dbConfig = require("../config/database");
+
+let User;
+
+if (dbConfig.orm === "mongoose") {
+    const { connectDB, getMongoose } = require("../db/mongoose");
+    const UserModel = require("./UserMongoose");
+
+    let UserInstance = null;
+
+    async function init() {
+        await connectDB();
+        UserInstance = UserModel;
+        console.log("Коллекция users готова (MongoDB)");
+    }
+
+    const userDB = {
+        init,
+
+        getAll: async () => {
+            return await UserInstance.find();
+        },
+
+        add: async (user) => {
+            const newUser = new UserInstance({
+                name: user.name,
+                email: user.email,
+                createdAt: new Date(),
+            });
+            const saved = await newUser.save();
+            return {
+                id: saved._id,
+                name: saved.name,
+                email: saved.email,
+                createdAt: saved.createdAt,
+            };
+        },
+
+        delete: async (id) => {
+            const result = await UserInstance.findByIdAndDelete(id);
+            return result !== null;
+        },
+
+        findByEmail: async (email) => {
+            const user = await UserInstance.findOne({ email });
+            return user ? user.toObject() : null;
+        },
+    };
+
+    module.exports = userDB;
+} else if (dbConfig.orm === "sequelize") {
+    const { connectDB, getSequelize } = require("../db/sequelize");
+    const UserModel = require("./UserSequelize");
+
+    let UserInstance = null;
+
+    async function init() {
+        await connectDB();
+        UserInstance = UserModel();
+        await getSequelize().sync();
+        console.log("Таблица users синхронизирована (SQLite)");
+    }
+
+    const userDB = {
+        init,
+
+        getAll: async () => {
+            const users = await UserInstance.findAll();
+            return users.map((u) => u.toJSON());
+        },
+
+        add: async (user) => {
+            const newUser = await UserInstance.create({
+                name: user.name,
+                email: user.email,
+                createdAt: new Date(),
+            });
+            return {
+                id: newUser.id,
+                name: newUser.name,
+                email: newUser.email,
+                createdAt: newUser.createdAt,
+            };
+        },
+
+        delete: async (id) => {
+            const deleted = await UserInstance.destroy({ where: { id } });
+            return deleted > 0;
+        },
+
+        findByEmail: async (email) => {
+            const user = await UserInstance.findOne({ where: { email } });
+            return user ? user.toJSON() : null;
+        },
+    };
+
+    module.exports = userDB;
+} else {
+    module.exports = require("../models/userModel");
+}

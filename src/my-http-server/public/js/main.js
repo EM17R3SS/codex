@@ -128,4 +128,11 @@ function initContactForm() {
 
 document.addEventListener("DOMContentLoaded", () => {
     initContactForm();
+    const addUserForm = document.getElementById("addUserForm");
+    if (addUserForm) {
+        addUserForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            await addUser();
+        });
+    }
 });

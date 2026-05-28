@@ -1,4 +1,4 @@
-const userModel = require("../models/userModel");
+const userModel = require("../models_new");
 
 class UserService {
     async getUsers() {
@@ -10,10 +10,10 @@ class UserService {
             throw new Error("Имя и Email обязательны");
         }
 
-        const existing = userModel.findByEmail(userData.email);
-        if (existing) {
-            throw new Error("Пользователь с таким Email уже существует");
-        }
+        //const existing = userModel.findByEmail(userData.email);
+        //if (existing) {
+        //    throw new Error("Пользователь с таким Email уже существует");
+        //}
 
         return await userModel.add(userData);
     }
