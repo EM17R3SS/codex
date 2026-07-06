@@ -8,19 +8,24 @@ if (dbConfig.orm === "mongoose") {
 
     let UserInstance = null;
 
+    const mapUser = (u) => ({
+        id: u._id.toString(),
+        name: u.name,
+        email: u.email,
+        createdAt: u.createdAt,
+    });
+
     async function init() {
-        await connectDB();
         UserInstance = UserModel;
         console.log("Коллекция users готова (MongoDB)");
     }
 
     const userDB = {
         init,
-
         getAll: async () => {
-            return await UserInstance.find();
+            const users = await UserInstance.find();
+            return users.map(mapUser);
         },
-
         add: async (user) => {
             const newUser = new UserInstance({
                 name: user.name,
@@ -28,22 +33,15 @@ if (dbConfig.orm === "mongoose") {
                 createdAt: new Date(),
             });
             const saved = await newUser.save();
-            return {
-                id: saved._id,
-                name: saved.name,
-                email: saved.email,
-                createdAt: saved.createdAt,
-            };
+            return mapUser(saved);
         },
-
         delete: async (id) => {
             const result = await UserInstance.findByIdAndDelete(id);
             return result !== null;
         },
-
         findByEmail: async (email) => {
             const user = await UserInstance.findOne({ email });
-            return user ? user.toObject() : null;
+            return user ? mapUser(user) : null;
         },
     };
 
@@ -55,7 +53,6 @@ if (dbConfig.orm === "mongoose") {
     let UserInstance = null;
 
     async function init() {
-        await connectDB();
         UserInstance = UserModel();
         await getSequelize().sync();
         console.log("Таблица users синхронизирована (SQLite)");

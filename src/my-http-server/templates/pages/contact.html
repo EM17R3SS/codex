@@ -131,7 +131,7 @@
                     const messageDiv = document.getElementById("formMessage");
                     messageDiv.innerHTML =
                         '<p class="success">Спасибо! Ваше сообщение отправлено.</p>';
-                    this.reset();
+                    e.target.reset();
 
                     setTimeout(() => {
                         messageDiv.innerHTML = "";

@@ -41,11 +41,11 @@ class PageController {
         ResponseHelper.sendHTML(res, html);
     }
 
-    static postLogin(req, res) {
+    static async postLogin(req, res) {
         const { email, password } = req.body;
         const userService = require("../services/userService");
 
-        const result = userService.validateLogin(email, password);
+        const result = await userService.validateLogin(email, password);
 
         if (result.success) {
             const html = `

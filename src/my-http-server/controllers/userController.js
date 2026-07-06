@@ -55,11 +55,23 @@ class UserController {
                 201,
             );
         } catch (error) {
+            let message = "Ошибка при создании пользователя";
+
+            if (error.code === "EMAIL_DUPLICATE") {
+                message = "Пользователь с таким Email уже существует";
+            } else if (error.name === "SequelizeUniqueConstraintError") {
+                message = "Пользователь с таким Email уже существует";
+            } else if (error.code === 11000) {
+                message = "Пользователь с таким Email уже существует";
+            } else if (error.message) {
+                message = error.message;
+            }
+
             ResponseHelper.sendJSON(
                 res,
                 {
                     success: false,
-                    error: error.message,
+                    error: message,
                 },
                 400,
             );

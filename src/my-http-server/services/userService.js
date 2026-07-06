@@ -10,10 +10,12 @@ class UserService {
             throw new Error("Имя и Email обязательны");
         }
 
-        //const existing = userModel.findByEmail(userData.email);
-        //if (existing) {
-        //    throw new Error("Пользователь с таким Email уже существует");
-        //}
+        const existing = await userModel.findByEmail(userData.email);
+        if (existing) {
+            const err = new Error("Пользователь с таким Email уже существует");
+            err.code = "EMAIL_DUPLICATE";
+            throw err;
+        }
 
         return await userModel.add(userData);
     }
@@ -22,8 +24,8 @@ class UserService {
         return await userModel.delete(id);
     }
 
-    validateLogin(email, password) {
-        const user = userModel.findByEmail(email);
+    async validateLogin(email, password) {
+        const user = await userModel.findByEmail(email);
         if (user && password === "password123") {
             return { success: true, name: user.name };
         }
